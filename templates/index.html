@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Price Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            padding: 15px 20px;
+            font-weight: 600;
+            border: none;
+        }
+        .graph-container {
+            height: 500px;
+            background: white;
+            border-radius: 0 0 12px 12px;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .controls label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .form-select, .form-control {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+        }
+        .form-select:focus, .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        tbody tr:hover {
+            background-color: #f0f4ff;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        a.link-btn {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a.link-btn:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .pareto-point {
+            transform: scale(1.3);
+            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.6));
+        }
+        @media (max-width: 768px) {
+            .graph-container {
+                height: 350px;
+            }
+            body {
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 GPU Price Tracker</h1>
+        <p id="lastUpdate">Data loading...</p>
+    </div>
+
+    <div class="stats">
+        <strong>Stats:</strong> <span id="statsText">Loading...</span>
+    </div>
+
+    <!-- Price Graph -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Price Trend</span>
+            <select class="form-select form-select-sm" id="gpuSelect" style="width: 250px;">
+                <option>Loading GPUs...</option>
+            </select>
+        </div>
+        <div id="priceGraph" class="graph-container"></div>
+    </div>
+
+    <!-- VRAM vs Price -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>VRAM vs Avg Price</span>
+            <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
+                <option value="1">Last 1 Day</option>
+                <option value="7" selected>Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="all">All Time</option>
+            </select>
+        </div>
+        <div id="vramGraph" class="graph-container"></div>
+    </div>
+
+    <!-- Tokens vs Price -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Tokens/s vs Avg Price</span>
+            <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
+                <option value="1">Last 1 Day</option>
+                <option value="7" selected>Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="all">All Time</option>
+            </select>
+        </div>
+        <div id="tokensGraph" class="graph-container"></div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="card">
+        <div class="card-header">Search Results</div>
+        <div style="background: white; padding: 20px; border-radius: 0 0 12px 12px;">
+            <div class="controls">
+                <div class="row">
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label>Min VRAM (GB)</label>
+                        <input type="number" class="form-control" id="minVram" min="0" value="0" step="1">
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label>Min Tokens/s</label>
+                        <input type="number" class="form-control" id="minTokens" min="0" value="0" step="1">
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label>Max Price (€)</label>
+                        <input type="number" class="form-control" id="maxPrice" min="0" value="999999" step="100">
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label>Search</label>
+                        <input type="text" class="form-control" id="searchBox" placeholder="Search titles...">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="filterBtn">Apply Filters</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>GPU Model</th>
+                            <th>Title</th>
+                            <th>Price (€)</th>
+                            <th>Link</th>
+                            <th>Posted</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable">
+                        <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGpuList = [];
+
+        async function loadGpus() {
+            const resp = await fetch("/api/gpus");
+            currentGpuList = await resp.json();
+            
+            const select = document.getElementById("gpuSelect");
+            select.innerHTML = currentGpuList.map(gpu => 
+                `<option value="${gpu.name}">${gpu.name}</option>`
+            ).join("");
+            
+            select.addEventListener("change", updatePriceGraph);
+            updatePriceGraph();
+        }
+
+        async function updateStats() {
+            const resp = await fetch("/api/stats");
+            const stats = await resp.json();
+            
+            const date = new Date(stats.last_updated);
+            document.getElementById("lastUpdate").textContent = 
+                `Last updated: ${date.toLocaleString()}`;
+            
+            let gpuInfo = Object.entries(stats.gpu_counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([name, count]) => `${name} (${count})`)
+                .join(" | ");
+            
+            document.getElementById("statsText").textContent = 
+                `Total Results: ${stats.total_results} | Top: ${gpuInfo}`;
+        }
+
+        async function updatePriceGraph() {
+            const gpu = document.getElementById("gpuSelect").value;
+            const resp = await fetch(`/api/price-history/${encodeURIComponent(gpu)}`);
+            const data = await resp.json();
+            
+            const trace = {
+                x: data.dates,
+                y: data.prices,
+                type: "scatter",
+                mode: "lines+markers",
+                fill: "tozeroy",
+                line: {color: "#667eea", width: 2},
+                marker: {size: 6, color: "#667eea"},
+                hovertemplate: "<b>%{x}</b><br>€%{y:.2f}<extra></extra>",
+            };
+            
+            const layout = {
+                title: `Price History: ${gpu}`,
+                xaxis: {title: "Date"},
+                yaxis: {title: "Price (€)"},
+                hovermode: "x unified",
+                margin: {l: 50, r: 20, t: 40, b: 40},
+                plot_bgcolor: "#fafbfc",
+                paper_bgcolor: "white",
+            };
+            
+            Plotly.newPlot("priceGraph", [trace], layout, {responsive: true});
+        }
+
+        async function updateScatterGraph(graphId, metric, daysSelect) {
+            const days = document.getElementById(daysSelect).value;
+            const resp = await fetch(`/api/scatter-data?metric=${metric}&days=${days}`);
+            const data = await resp.json();
+            
+            const points = data.points;
+            const pareto = data.pareto_indices;
+            
+            // Regular points
+            const regular = points.filter((_, i) => !pareto.includes(i));
+            const paretoPoints = points.filter((_, i) => pareto.includes(i));
+            
+            const regularTrace = {
+                x: regular.map(p => p.x),
+                y: regular.map(p => p.y),
+                mode: "markers",
+                type: "scatter",
+                text: regular.map(p => p.gpu),
+                marker: {
+                    size: 8,
+                    color: "#667eea",
+                    opacity: 0.6,
+                },
+                hovertemplate: "<b>%{text}</b><br>%{x}<br>€%{y:.0f}<extra></extra>",
+                name: "Cards",
+            };
+            
+            let traces = [regularTrace];
+            
+            if (paretoPoints.length > 0) {
+                const paretoTrace = {
+                    x: paretoPoints.map(p => p.x),
+                    y: paretoPoints.map(p => p.y),
+                    mode: "markers",
+                    type: "scatter",
+                    text: paretoPoints.map(p => p.gpu),
+                    marker: {
+                        size: 12,
+                        color: "#ff6b6b",
+                        symbol: "star",
+                        line: {color: "white", width: 2},
+                    },
+                    hovertemplate: "<b>%{text}</b><br>%{x}<br>€%{y:.0f}<extra></extra>",
+                    name: "Pareto Front",
+                };
+                traces.push(paretoTrace);
+            }
+            
+            const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
+            const layout = {
+                xaxis: {title: xLabel, gridcolor: "#e0e0e0"},
+                yaxis: {title: "Avg Price (€)", gridcolor: "#e0e0e0"},
+                hovermode: "closest",
+                margin: {l: 50, r: 20, t: 40, b: 40},
+                plot_bgcolor: "#fafbfc",
+                paper_bgcolor: "white",
+                showlegend: true,
+            };
+            
+            Plotly.newPlot(graphId, traces, layout, {responsive: true});
+        }
+
+        async function loadResults() {
+            const minVram = document.getElementById("minVram").value;
+            const minTokens = document.getElementById("minTokens").value;
+            const maxPrice = document.getElementById("maxPrice").value;
+            const search = document.getElementById("searchBox").value;
+            
+            const params = new URLSearchParams({
+                min_vram: minVram,
+                min_tokens: minTokens,
+                max_price: maxPrice,
+                search: search,
+            });
+            
+            const resp = await fetch(`/api/results?${params}`);
+            const results = await resp.json();
+            
+            const tbody = document.getElementById("resultsTable");
+            if (results.length === 0) {
+                tbody.innerHTML = "<tr><td colspan=\"5\" class=\"text-center text-muted\">No results found</td></tr>";
+                return;
+            }
+            
+            tbody.innerHTML = results.map(r => `
+                <tr>
+                    <td><strong>${r.gpu}</strong><br><small class="text-muted">VRAM: ${r.vram}GB, Tokens/s: ${r.tokens}</small></td>
+                    <td>${r.title.substring(0, 60)}</td>
+                    <td><strong>€${r.price}</strong></td>
+                    <td><a href="${r.link}" target="_blank" class="link-btn">View</a></td>
+                    <td><small>${new Date(r.timestamp).toLocaleDateString()}</small></td>
+                </tr>
+            `).join("");
+        }
+
+        document.getElementById("filterBtn").addEventListener("click", loadResults);
+        
+        document.getElementById("vramDaysSelect").addEventListener("change", () => 
+            updateScatterGraph("vramGraph", "vram", "vramDaysSelect")
+        );
+        
+        document.getElementById("tokensDaysSelect").addEventListener("change", () => 
+            updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect")
+        );
+
+        // Initial load
+        async function init() {
+            await updateStats();
+            await loadGpus();
+            await updateScatterGraph("vramGraph", "vram", "vramDaysSelect");
+            await updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect");
+            await loadResults();
+            
+            // Refresh stats every 10 seconds
+            setInterval(updateStats, 10000);
+        }
+
+        init();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
