@@ -52,8 +52,11 @@ def search_gpu(gpu: object) -> int:
                         except (ValueError, TypeError):
                             price = None
                     
-                    # Skip listings with no price
+                    # Skip listings with no price or extremely low price
                     if price is None:
+                        continue
+                    # Exclude listings below €50
+                    if price < 50:
                         continue
                     
                     # Extract location city safely (avoid Python repr strings)

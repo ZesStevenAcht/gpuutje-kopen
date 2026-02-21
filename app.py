@@ -45,9 +45,13 @@ def api_gpus():
 @app.route("/api/price-history/<gpu_name>")
 def api_price_history(gpu_name):
     """Get price history for a GPU."""
+    # aggregation: agg=min|avg, period=day|week|month
+    agg = request.args.get("agg", "min")
+    period = request.args.get("period", "day")
+
     results = get_results_by_gpu(gpu_name)
-    history = calc_price_history(results)
-    
+    history = calc_price_history(results, agg=agg, period=period)
+
     return jsonify({
         "dates": [h[0] for h in history],
         "prices": [h[1] for h in history],
@@ -73,23 +77,36 @@ def api_scatter_data():
         avg_price = get_avg_price_period(results, days)
         if avg_price <= 0:
             continue
-        
-        x = gpu.vram if metric == "vram" else gpu.tokens_sec
+        # quality is VRAM or tokens (to maximize), price is avg_price (to minimize)
+        quality = gpu.vram if metric == "vram" else gpu.tokens_sec
+
+        # Find lowest-priced listing link for this GPU
+        lowest = None
+        for r in results:
+            p = r.get("price")
+            if not isinstance(p, (int, float)):
+                continue
+            if lowest is None or p < lowest["price"]:
+                lowest = {"price": p, "link": r.get("link"), "title": r.get("title"), "timestamp": r.get("timestamp")}
+
         points.append({
-            "x": x,
-            "y": avg_price,
+            "quality": quality,
+            "price": avg_price,
             "gpu": gpu.name,
             "vram": gpu.vram,
             "tokens": gpu.tokens_sec,
+            "lowest": lowest,
         })
     
     # Find Pareto front
+    # Determine Pareto front (price minimize, quality maximize)
     if points:
-        pareto = find_pareto_front([(p["x"], p["y"]) for p in points])
+        pairs = [(p["price"], p["quality"]) for p in points]
+        pareto = find_pareto_front(pairs)
         pareto_pts = set(pareto)
-        
+
         for i, p in enumerate(points):
-            if (p["x"], p["y"]) in pareto_pts:
+            if (p["price"], p["quality"]) in pareto_pts:
                 pareto_idx.add(i)
     
     return jsonify({
@@ -141,7 +158,24 @@ def api_results():
             })
     
     # Sort by timestamp descending
-    results.sort(key=lambda r: r["timestamp"], reverse=True)
+    # Optional sorting
+    sort_by = request.args.get("sort_by", "timestamp")  # price, type, vram, tokens, timestamp
+    order = request.args.get("order", "desc")  # asc or desc
+
+    def sort_key(r):
+        if sort_by == "price":
+            return r.get("price", 0)
+        if sort_by == "type":
+            return r.get("gpu", "")
+        if sort_by == "vram":
+            return r.get("vram", 0)
+        if sort_by == "tokens":
+            return r.get("tokens", 0)
+        # default timestamp
+        return r.get("timestamp", "")
+
+    reverse = order != "asc"
+    results.sort(key=sort_key, reverse=reverse)
     
     # Limit to 500 results
     return jsonify(results[:500])

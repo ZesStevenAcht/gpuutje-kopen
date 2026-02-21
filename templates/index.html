@@ -144,9 +144,16 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Price Trend</span>
-            <select class="form-select form-select-sm" id="gpuSelect" style="width: 250px;">
-                <option>Loading GPUs...</option>
-            </select>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <select class="form-select form-select-sm" id="gpuSelect" style="width: 250px;">
+                    <option>Loading GPUs...</option>
+                </select>
+                <select class="form-select form-select-sm" id="priceGroupSelect" style="width: 140px;">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                </select>
+            </div>
         </div>
         <div id="priceGraph" class="graph-container"></div>
     </div>
@@ -202,7 +209,28 @@
                         <input type="text" class="form-control" id="searchBox" placeholder="Search titles...">
                     </div>
                 </div>
-                <button class="btn btn-primary" id="filterBtn">Apply Filters</button>
+                <div class="row mt-3">
+                    <div class="col-md-6 col-lg-3 mb-2">
+                        <label>Sort By</label>
+                        <select id="sortBySelect" class="form-select">
+                            <option value="timestamp" selected>Newest</option>
+                            <option value="price">Price</option>
+                            <option value="type">GPU</option>
+                            <option value="vram">VRAM</option>
+                            <option value="tokens">Tokens/s</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-2">
+                        <label>Order</label>
+                        <select id="sortOrderSelect" class="form-select">
+                            <option value="desc" selected>Descending</option>
+                            <option value="asc">Ascending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-2 d-flex align-items-end">
+                        <button class="btn btn-primary" id="filterBtn">Apply Filters</button>
+                    </div>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -260,7 +288,8 @@
 
         async function updatePriceGraph() {
             const gpu = document.getElementById("gpuSelect").value;
-            const resp = await fetch(`/api/price-history/${encodeURIComponent(gpu)}`);
+            const period = document.getElementById("priceGroupSelect").value || 'day';
+            const resp = await fetch(`/api/price-history/${encodeURIComponent(gpu)}?agg=min&period=${period}`);
             const data = await resp.json();
             
             const trace = {
@@ -291,35 +320,37 @@
             const days = document.getElementById(daysSelect).value;
             const resp = await fetch(`/api/scatter-data?metric=${metric}&days=${days}`);
             const data = await resp.json();
-            
+
             const points = data.points;
             const pareto = data.pareto_indices;
-            
+
             // Regular points
             const regular = points.filter((_, i) => !pareto.includes(i));
             const paretoPoints = points.filter((_, i) => pareto.includes(i));
-            
+
             const regularTrace = {
-                x: regular.map(p => p.x),
-                y: regular.map(p => p.y),
+                x: regular.map(p => p.quality),
+                y: regular.map(p => p.price),
+                customdata: regular.map(p => p.lowest ? p.lowest.link : null),
                 mode: "markers",
                 type: "scatter",
                 text: regular.map(p => p.gpu),
                 marker: {
                     size: 8,
                     color: "#667eea",
-                    opacity: 0.6,
+                    opacity: 0.8,
                 },
                 hovertemplate: "<b>%{text}</b><br>%{x}<br>€%{y:.0f}<extra></extra>",
                 name: "Cards",
             };
-            
+
             let traces = [regularTrace];
-            
+
             if (paretoPoints.length > 0) {
                 const paretoTrace = {
-                    x: paretoPoints.map(p => p.x),
-                    y: paretoPoints.map(p => p.y),
+                    x: paretoPoints.map(p => p.quality),
+                    y: paretoPoints.map(p => p.price),
+                    customdata: paretoPoints.map(p => p.lowest ? p.lowest.link : null),
                     mode: "markers",
                     type: "scatter",
                     text: paretoPoints.map(p => p.gpu),
@@ -334,7 +365,7 @@
                 };
                 traces.push(paretoTrace);
             }
-            
+
             const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
             const layout = {
                 xaxis: {title: xLabel, gridcolor: "#e0e0e0"},
@@ -345,8 +376,19 @@
                 paper_bgcolor: "white",
                 showlegend: true,
             };
-            
-            Plotly.newPlot(graphId, traces, layout, {responsive: true});
+
+            await Plotly.newPlot(graphId, traces, layout, {responsive: true});
+
+            // Open lowest listing when user clicks a point
+            const graphElem = document.getElementById(graphId);
+            graphElem.on('plotly_click', function(eventData){
+                if (!eventData || !eventData.points || !eventData.points.length) return;
+                const pt = eventData.points[0];
+                const link = pt.customdata || (pt.data && pt.data.customdata && pt.data.customdata[pt.pointNumber]);
+                if (link) {
+                    window.open(link, '_blank');
+                }
+            });
         }
 
         async function loadResults() {
@@ -355,13 +397,18 @@
             const maxPrice = document.getElementById("maxPrice").value;
             const search = document.getElementById("searchBox").value;
             
+            const sortBy = document.getElementById('sortBySelect').value;
+            const sortOrder = document.getElementById('sortOrderSelect').value;
+
             const params = new URLSearchParams({
                 min_vram: minVram,
                 min_tokens: minTokens,
                 max_price: maxPrice,
                 search: search,
+                sort_by: sortBy,
+                order: sortOrder,
             });
-            
+
             const resp = await fetch(`/api/results?${params}`);
             const results = await resp.json();
             
@@ -383,6 +430,7 @@
         }
 
         document.getElementById("filterBtn").addEventListener("click", loadResults);
+        document.getElementById("priceGroupSelect").addEventListener("change", updatePriceGraph);
         
         document.getElementById("vramDaysSelect").addEventListener("change", () => 
             updateScatterGraph("vramGraph", "vram", "vramDaysSelect")

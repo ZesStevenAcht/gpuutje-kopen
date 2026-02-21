@@ -42,28 +42,64 @@ def find_pareto_front(points: list[tuple]) -> list[tuple]:
     return pareto
 
 
-def calc_price_history(results: list[dict]) -> list[tuple]:
-    """Calculate daily average prices (date, price)."""
-    prices_by_date = {}
-    
+def calc_price_history(results: list[dict], agg: str = "min", period: str = "day") -> list[tuple]:
+    """Calculate price history aggregated by period.
+
+    - `agg` can be 'min' or 'avg'.
+    - `period` can be 'day', 'week', or 'month'.
+
+    Returns list of (period_label, price).
+    """
+    groups: dict = {}
+
     for r in results:
         try:
             ts = datetime.fromisoformat(r.get("timestamp", ""))
-            date = ts.date()
             price = r.get("price")
-            
+
             if not isinstance(price, (int, float)):
                 continue
-                
-            if date not in prices_by_date:
-                prices_by_date[date] = []
-            prices_by_date[date].append(price)
+
+            if period == "day":
+                key = ts.date()
+            elif period == "week":
+                iso = ts.isocalendar()
+                key = f"{iso[0]}-W{iso[1]:02d}"  # e.g. 2026-W05
+            elif period == "month":
+                key = f"{ts.year}-{ts.month:02d}"
+            else:
+                key = ts.date()
+
+            groups.setdefault(key, []).append(price)
         except (ValueError, TypeError):
             continue
-    
-    history = [
-        (str(date), mean(prices))
-        for date, prices in sorted(prices_by_date.items())
-    ]
-    
+
+    history = []
+    # Sort keys chronologically when possible
+    def sort_key(k):
+        if isinstance(k, (str,)):
+            # try ISO-like strings
+            try:
+                if "-W" in k:
+                    yr, w = k.split("-W")
+                    return (int(yr), int(w), 0)
+                if "-" in k and len(k) == 7:
+                    yr, m = k.split("-")
+                    return (int(yr), int(m), 0)
+            except Exception:
+                return (k,)
+        return (k,)
+
+    for key in sorted(groups.keys(), key=sort_key):
+        prices = groups[key]
+        if not prices:
+            continue
+
+        if agg == "min":
+            val = min(prices)
+        else:
+            val = mean(prices)
+
+        history.append((str(key), val))
+
     return history
