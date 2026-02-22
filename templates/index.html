@@ -113,6 +113,26 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+        .main-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .description-card .card-header {
+            font-size: 18px;
+        }
+        .description-card p {
+            margin: 0 0 10px 0;
+            color: #333;
+            line-height: 1.45;
+        }
+        @media (min-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+                align-items: start;
+            }
+            .main-grid .card { height: auto; }
+            .graph-container { height: 420px; }
+        }
         @media (max-width: 768px) {
             .graph-container {
                 height: 350px;
@@ -136,50 +156,57 @@
         <strong>Stats:</strong> <span id="statsText">Loading...</span>
     </div>
 
-    <!-- Price Graph -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Price Trend</span>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <select class="form-select form-select-sm" id="gpuSelect" style="width: 250px;">
-                    <option>Loading GPUs...</option>
-                </select>
-                <select class="form-select form-select-sm" id="priceGroupSelect" style="width: 140px;">
-                    <option value="day">Day</option>
-                    <option value="week">Week</option>
-                    <option value="month">Month</option>
-                </select>
+    <div class="main-grid">
+        <div class="card description-card">
+            <div class="card-header">GPUutje kopen!</div>
+            <div style="background: white; padding: 20px; border-radius: 0 0 12px 12px;">
+                <p>Dit is een simpel dashboard die voor een vaste lijst aan GPUs automatisch aanbiedingen op marktplaats opzoekt en bijhoud. Op basis van https://github.com/XiongjieDai/GPU-Benchmarks-on-LLM-Inference heb ik een lijst opgesteld van kaarten, met VRAM en verwachte tokens/s op LLama3.1:8b. Als de kaart niet in de lijst van geteste kaarten staat, zijn de token/s automatisch ingevuld, op basis van vergelijkbare kaarten in de geteste lijst.</p>
+                <p><strong>Let op:</strong> Deze website verzameld alleen aanbiedingen en geeft statistieken op basis van aannames. De aankoop is altijd 100% je eigen verantwoordelijkheid</p>
             </div>
         </div>
-        <div id="priceGraph" class="graph-container"></div>
-    </div>
 
-    <!-- VRAM vs Price -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>VRAM vs Avg Price</span>
-            <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
-                <option value="1">Last 1 Day</option>
-                <option value="7" selected>Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="all">All Time</option>
-            </select>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Price Trend</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="form-select form-select-sm" id="gpuSelect" style="width: 250px;">
+                        <option>Loading GPUs...</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="priceGroupSelect" style="width: 140px;">
+                        <option value="day">Day</option>
+                        <option value="week">Week</option>
+                        <option value="month">Month</option>
+                    </select>
+                </div>
+            </div>
+            <div id="priceGraph" class="graph-container"></div>
         </div>
-        <div id="vramGraph" class="graph-container"></div>
-    </div>
 
-    <!-- Tokens vs Price -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Tokens/s vs Avg Price</span>
-            <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
-                <option value="1">Last 1 Day</option>
-                <option value="7" selected>Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="all">All Time</option>
-            </select>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>VRAM vs Avg Price</span>
+                <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
+                    <option value="1">Last 1 Day</option>
+                    <option value="7" selected>Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div id="vramGraph" class="graph-container"></div>
         </div>
-        <div id="tokensGraph" class="graph-container"></div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Tokens/s vs Avg Price</span>
+                <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
+                    <option value="1">Last 1 Day</option>
+                    <option value="7" selected>Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div id="tokensGraph" class="graph-container"></div>
+        </div>
     </div>
 
     <!-- Search Results -->
