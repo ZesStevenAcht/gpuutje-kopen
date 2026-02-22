@@ -14,11 +14,19 @@ def get_avg_price_period(results: list[dict], days: int | None) -> float:
         prices = [r.get("price") for r in results if isinstance(r.get("price"), (int, float))]
     else:
         cutoff = datetime.now() - timedelta(days=days)
-        prices = [
-            r.get("price") for r in results
-            if isinstance(r.get("price"), (int, float))
-            and datetime.fromisoformat(r.get("timestamp", "")) > cutoff
-        ]
+        prices = []
+        for r in results:
+            if not isinstance(r.get("price"), (int, float)):
+                continue
+            # Prefer listing 'date' if present, fallback to stored 'timestamp'
+            date_str = r.get("date") or r.get("timestamp")
+            try:
+                dt = datetime.fromisoformat(date_str)
+            except Exception:
+                # skip entries with bad dates
+                continue
+            if dt > cutoff:
+                prices.append(r.get("price"))
     
     return mean(prices) if prices else 0
 
@@ -42,55 +50,63 @@ def find_pareto_front(points: list[tuple]) -> list[tuple]:
     return pareto
 
 
-def calc_price_history(results: list[dict], agg: str = "min", period: str = "day") -> list[tuple]:
-    """Calculate price history aggregated by period.
+def calc_price_history(results: list[dict], agg: str = "min", span: str = "30d") -> list[tuple]:
+    """Calculate price history for a time span.
 
     - `agg` can be 'min' or 'avg'.
-    - `period` can be 'day', 'week', or 'month'.
+    - `span` can be '14d', '30d', or '1y'.
 
-    Returns list of (period_label, price).
+    Returns a list of (period_start_iso_date, price) where period_start is per-day for short spans
+    and per-week for yearly span.
     """
     groups: dict = {}
+    now = datetime.now()
+
+    # Determine cutoff and binning
+    span = span or "30d"
+    try:
+        if span.endswith('d'):
+            days = int(span[:-1])
+            cutoff = now - timedelta(days=days)
+            bin_by = 'day'
+        elif span.endswith('y'):
+            years = int(span[:-1])
+            cutoff = now - timedelta(days=365 * years)
+            bin_by = 'week'
+        else:
+            # fallback to 30 days
+            days = 30
+            cutoff = now - timedelta(days=days)
+            bin_by = 'day'
+    except Exception:
+        cutoff = now - timedelta(days=30)
+        bin_by = 'day'
 
     for r in results:
         try:
-            ts = datetime.fromisoformat(r.get("timestamp", ""))
+            date_str = r.get("date") or r.get("timestamp")
+            ts = datetime.fromisoformat(date_str)
             price = r.get("price")
 
             if not isinstance(price, (int, float)):
                 continue
 
-            if period == "day":
-                key = ts.date()
-            elif period == "week":
-                iso = ts.isocalendar()
-                key = f"{iso[0]}-W{iso[1]:02d}"  # e.g. 2026-W05
-            elif period == "month":
-                key = f"{ts.year}-{ts.month:02d}"
+            if ts < cutoff:
+                continue
+
+            if bin_by == 'day':
+                key = ts.date().isoformat()
             else:
-                key = ts.date()
+                # week: use ISO week start (Monday)
+                start = ts - timedelta(days=ts.weekday())
+                key = start.date().isoformat()
 
             groups.setdefault(key, []).append(price)
         except (ValueError, TypeError):
             continue
 
     history = []
-    # Sort keys chronologically when possible
-    def sort_key(k):
-        if isinstance(k, (str,)):
-            # try ISO-like strings
-            try:
-                if "-W" in k:
-                    yr, w = k.split("-W")
-                    return (int(yr), int(w), 0)
-                if "-" in k and len(k) == 7:
-                    yr, m = k.split("-")
-                    return (int(yr), int(m), 0)
-            except Exception:
-                return (k,)
-        return (k,)
-
-    for key in sorted(groups.keys(), key=sort_key):
+    for key in sorted(groups.keys()):
         prices = groups[key]
         if not prices:
             continue

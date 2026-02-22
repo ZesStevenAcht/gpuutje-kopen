@@ -49,6 +49,8 @@ def save_result(gpu_name: str, listing_data: dict):
             "date": listing_data.get("date"),
             "location": listing_data.get("location"),
             "timestamp": datetime.now().isoformat(),
+            "id": listing_data.get("id"),
+            "active": True,
         }
         
         # Avoid duplicates by checking title+price+date
@@ -65,6 +67,37 @@ def save_result(gpu_name: str, listing_data: dict):
         data["updated"] = datetime.now().isoformat()
         
         RESULTS_FILE.write_text(json.dumps(data, indent=2))
+
+
+def mark_active_listings(gpu_name: str, active_ids: set[str]):
+    """Mark listings for a GPU as active/inactive based on the provided IDs.
+
+    Listings whose `id` is in `active_ids` will be set to active=True. Others for the
+    same GPU will be set to active=False. Thread-safe.
+    """
+    init_storage()
+    with _file_lock:
+        try:
+            data = json.loads(RESULTS_FILE.read_text())
+        except json.JSONDecodeError:
+            return
+
+        changed = False
+        for r in data.get("results", []):
+            if r.get("gpu_name") != gpu_name:
+                continue
+            rid = r.get("id")
+            # Only mark if id exists; entries without id keep their current active state
+            if rid is None:
+                continue
+            should_be_active = rid in active_ids
+            if r.get("active") != should_be_active:
+                r["active"] = should_be_active
+                changed = True
+
+        if changed:
+            data["updated"] = datetime.now().isoformat()
+            RESULTS_FILE.write_text(json.dumps(data, indent=2))
 
 
 def get_results_by_gpu(gpu_name: str) -> list[dict]:

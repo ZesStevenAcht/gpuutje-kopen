@@ -45,12 +45,12 @@ def api_gpus():
 @app.route("/api/price-history/<gpu_name>")
 def api_price_history(gpu_name):
     """Get price history for a GPU."""
-    # aggregation: agg=min|avg, period=day|week|month
+    # aggregation: agg=min|avg, span=14d|30d|1y
     agg = request.args.get("agg", "min")
-    period = request.args.get("period", "day")
+    span = request.args.get("span", "30d")
 
     results = get_results_by_gpu(gpu_name)
-    history = calc_price_history(results, agg=agg, period=period)
+    history = calc_price_history(results, agg=agg, span=span)
 
     return jsonify({
         "dates": [h[0] for h in history],
@@ -64,7 +64,7 @@ def api_scatter_data():
     days_str = request.args.get("days")
     metric = request.args.get("metric", "vram")  # vram or tokens
     
-    days = None if days_str == "all" else int(days_str) if days_str else 7
+    days = None if days_str == "all" else int(days_str) if days_str else 30
     
     points = []
     
@@ -85,8 +85,18 @@ def api_scatter_data():
             p = r.get("price")
             if not isinstance(p, (int, float)):
                 continue
-            if lowest is None or p < lowest["price"]:
-                lowest = {"price": p, "link": r.get("link"), "title": r.get("title"), "timestamp": r.get("timestamp")}
+            # Prefer active listings when deciding which link to open
+            is_active = r.get("active", True)
+            if lowest is None:
+                lowest = {"price": p, "link": r.get("link"), "title": r.get("title"), "timestamp": r.get("timestamp"), "active": is_active}
+            else:
+                # Choose a new lowest if:
+                #  - its price is lower, or
+                #  - current lowest is inactive and this one is active with same price
+                if p < lowest["price"]:
+                    lowest = {"price": p, "link": r.get("link"), "title": r.get("title"), "timestamp": r.get("timestamp"), "active": is_active}
+                elif p == lowest["price"] and is_active and not lowest.get("active", True):
+                    lowest = {"price": p, "link": r.get("link"), "title": r.get("title"), "timestamp": r.get("timestamp"), "active": is_active}
 
         points.append({
             "quality": quality,
@@ -141,6 +151,7 @@ def api_results():
                 "price": price,
                 "link": r["link"],
                 "timestamp": r["timestamp"],
+                "active": r.get("active", True),
                 "vram": gpu.vram,
                 "tokens": gpu.tokens_sec,
             })

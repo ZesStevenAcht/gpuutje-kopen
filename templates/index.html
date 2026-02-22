@@ -118,10 +118,9 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Tokens/s vs Avg Price</span>
                 <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
-                    <option value="1">Last 1 Day</option>
-                    <option value="7" selected>Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="all">All Time</option>
+                    <option value="14">Last 14 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="365">Last Year</option>
                 </select>
             </div>
             <div id="tokensGraph" class="graph-container"></div>
@@ -132,10 +131,9 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>VRAM vs Avg Price</span>
                 <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
-                    <option value="1">Last 1 Day</option>
-                    <option value="7" selected>Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="all">All Time</option>
+                    <option value="14">Last 14 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="365">Last Year</option>
                 </select>
             </div>
             <div id="vramGraph" class="graph-container"></div>
@@ -150,9 +148,9 @@
                         <option>Loading GPUs...</option>
                     </select>
                     <select class="form-select form-select-sm" id="priceGroupSelect" style="width: 140px;">
-                        <option value="day">Day</option>
-                        <option value="week">Week</option>
-                        <option value="month">Month</option>
+                        <option value="14d">Last 14 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="1y">Last Year</option>
                     </select>
                 </div>
             </div>
@@ -163,8 +161,11 @@
         <div class="card description-card">
             <div class="card-header">GPUutje kopen!</div>
             <div class="description-body">
-                <p>Dit dashboard zoekt en houdt automatisch aanbiedingen op Marktplaats bij voor een vaste lijst GPUs. VRAM en tokens/s komen uit een benchmarklijst; niet-geteste kaarten krijgen een geschatte tokens/s op basis van vergelijkbare modellen.</p>
+                <p>Dit dashboard zoekt en houdt automatisch aanbiedingen op Marktplaats bij voor een vaste lijst GPUs. Zo kun je zien hoeveel geld er nu ongeveer gevraagd wordt voor welke kaarten, en welke kaarten kosten-efficient zijn voor LLM toepassingen. Klik op een datapunt om naar de goedkoopste listing te gaan van die GPU op dit moment, of gebruik de zoek tool hier beneden om gevonden advertenties op specifieke criteria te filteren. </p>
+                <p>VRAM en tokens/s komen uit een benchmarklijst; niet-geteste kaarten krijgen een geschatte tokens/s op basis van vergelijkbare modellen.</p>
                 <p><strong>Let op:</strong> Deze website verzamelt alleen aanbiedingen en geeft statistieken op basis van aannames. De aankoop is altijd 100% je eigen verantwoordelijkheid. Zie <a href="https://github.com/XiongjieDai/GPU-Benchmarks-on-LLM-Inference" target="_blank">GPU-Benchmarks-on-LLM-Inference</a> voor de bron.</p>
+                <p></p>
+                <p><i>Gemaakt door Steven Jelsma</i></p>
             </div>
         </div>
     </div>
@@ -279,8 +280,8 @@
 
         async function updatePriceGraph() {
             const gpu = document.getElementById("gpuSelect").value;
-            const period = document.getElementById("priceGroupSelect").value || 'day';
-            const resp = await fetch(`/api/price-history/${encodeURIComponent(gpu)}?agg=min&period=${period}`);
+            const span = document.getElementById("priceGroupSelect").value || '30d';
+            const resp = await fetch(`/api/price-history/${encodeURIComponent(gpu)}?agg=min&span=${span}`);
             const data = await resp.json();
             
             const trace = {
@@ -296,7 +297,7 @@
             
             const layout = {
                 title: `Price History: ${gpu}`,
-                xaxis: {title: "Date"},
+                xaxis: {title: "Date", type: 'date', tickformat: "%d/%m"},
                 yaxis: {title: "Price (€)"},
                 hovermode: "x unified",
                 margin: {l: 50, r: 20, t: 40, b: 40},
@@ -308,7 +309,7 @@
         }
 
         async function updateScatterGraph(graphId, metric, daysSelect) {
-            const days = document.getElementById(daysSelect).value;
+            const days = document.getElementById(daysSelect).value || '30';
             const resp = await fetch(`/api/scatter-data?metric=${metric}&days=${days}`);
             const data = await resp.json();
 

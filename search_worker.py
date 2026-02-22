@@ -8,7 +8,7 @@ from threading import Thread
 from marktplaats import SearchQuery, category_from_name
 
 from main import GPU_LIST
-from storage import save_result
+from storage import save_result, mark_active_listings
 from validation import validate_listing
 
 
@@ -21,6 +21,7 @@ SEARCH_INTERVAL = 8 * 60 * 60  # 8 hours in seconds
 def search_gpu(gpu: object) -> int:
     """Search for a GPU and save results."""
     found = 0
+    found_ids: set[str] = set()
     
     for query_str in gpu.search_queries:
         try:
@@ -40,6 +41,7 @@ def search_gpu(gpu: object) -> int:
                     price = getattr(listing, "price", None)
                     link = getattr(listing, "link", "")
                     date = getattr(listing, "date", None)
+                    listing_id = getattr(listing, "id", None)
                     location = getattr(listing, "location", None)
                     
                     # Ensure title is string
@@ -90,14 +92,23 @@ def search_gpu(gpu: object) -> int:
                         "link": link,
                         "date": date.isoformat() if date else None,
                         "location": location_str,
+                        "id": str(listing_id) if listing_id is not None else None,
                     }
                     save_result(target_gpu, data)
+                    if listing_id is not None:
+                        found_ids.add(str(listing_id))
                     found += 1
                 except Exception as e:
                     log.debug(f"Error processing listing: {e}")
                     
         except Exception as e:
             log.error(f"Error searching '{query_str}' for {gpu.name}: {e}")
+    # After processing all queries for this GPU, mark active listings
+    try:
+        if found_ids:
+            mark_active_listings(gpu.name, found_ids)
+    except Exception as e:
+        log.debug(f"Error marking active listings for {gpu.name}: {e}")
     
     return found
 
