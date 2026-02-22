@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  gpuutje-kopen:
+    build: .
+    container_name: gpuutje-kopen-app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the data directory to persist results.json on the host
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+    restart: unless-stopped
+    # Run with unbuffered output to see logs in real-time
+    stdin_open: true
+    tty: true

@@ -92,9 +92,9 @@ validate_listing(gpu_name, title, threshold=70)
 
 ### Testing
 
-**Test Suite:** `test_validation.py`
+**Test Suite:** `tests/test_validation.py`
 ```bash
-python test_validation.py
+python -m pytest tests/test_validation.py
 ```
 
 Output shows:
@@ -105,7 +105,7 @@ Output shows:
 
 **Single Search Test:**
 ```bash
-python search_worker.py
+python -m gpuutje_kopen.search_worker
 ```
 
 Check logs for entries like:
@@ -156,9 +156,9 @@ DEBUG: Listing rejected (low match score): 'GPU graphics card...' (score: 30.0)
 
 ### Files Modified/Created
 
-- ✓ Created: `validation.py` - Core validation module
-- ✓ Modified: `search_worker.py` - Integrated validation
-- ✓ Created: `test_validation.py` - Test suite
+- ✓ Created: `src/gpuutje_kopen/validation.py` - Core validation module
+- ✓ Modified: `src/gpuutje_kopen/search_worker.py` - Integrated validation
+- ✓ Created: `tests/test_validation.py` - Test suite
 - ✓ Modified: `README.md` - Documentation
 
 ### Dependencies

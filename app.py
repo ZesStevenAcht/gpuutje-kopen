@@ -1,13 +1,19 @@
 """Flask web app for GPU price tracker."""
 
+import sys
+from pathlib import Path
+
+# Add src to path so we can import the package
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 import json
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
 
-from main import GPU_LIST
-from storage import load_results, get_results_by_gpu, get_latest_listings
-from analytics import calc_price_history, get_avg_price_period
-from search_worker import start_worker_thread
+from gpuutje_kopen.gpu_list import GPU_LIST
+from gpuutje_kopen.storage import load_results, get_results_by_gpu, get_latest_listings
+from gpuutje_kopen.analytics import calc_price_history, get_avg_price_period
+from gpuutje_kopen.search_worker import start_worker_thread
 
 
 app = Flask(__name__)

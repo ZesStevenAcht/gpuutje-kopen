@@ -7,9 +7,9 @@ from threading import Thread
 
 from marktplaats import SearchQuery, category_from_name
 
-from main import GPU_LIST
-from storage import save_result, mark_active_listings
-from validation import validate_listing
+from .gpu_list import GPU_LIST
+from .storage import save_result, mark_active_listings
+from .validation import validate_listing
 
 
 logging.basicConfig(level=logging.INFO)

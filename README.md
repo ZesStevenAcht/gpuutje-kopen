@@ -32,17 +32,28 @@ A Flask-based web application that periodically searches for GPUs on Marktplaats
 
 ```
 /home/Marktplaats_scraper/
-├── main.py                  # GPU list definitions with specs
-├── app.py                   # Flask web application
-├── search_worker.py         # Periodic search background worker
-├── storage.py              # Data persistence (JSON-based)
-├── analytics.py            # Price analysis and aggregation
+├── app.py                              # Flask entry point
+├── src/gpuutje_kopen/
+│   ├── __init__.py                     # Package initialization
+│   ├── gpu_list.py                     # GPU definitions with specs
+│   ├── storage.py                      # Data persistence (JSON-based)
+│   ├── analytics.py                    # Price analysis and aggregation
+│   ├── validation.py                   # Fuzzy matching validation
+│   └── search_worker.py                # Periodic search background worker
 ├── templates/
-│   └── index.html          # Web interface
+│   └── index.html                      # Web interface
+├── tests/
+│   └── test_validation.py              # Validation module tests
+├── docs/
+│   ├── DOCKER.md                       # Docker deployment guide
+│   └── VALIDATION.md                   # Fuzzy matching validation docs
 ├── data/
-│   └── results.json        # Accumulated search results
-├── pyproject.toml          # Python dependencies
-└── README.md              # This file
+│   └── results.json                    # Accumulated search results (created at runtime)
+├── docker-compose.yml                  # Docker Compose configuration
+├── Dockerfile                          # Docker image definition
+├── pyproject.toml                      # Python dependencies
+├── README.md                           # This file
+└── .gitignore                          # Git ignore rules
 ```
 
 ## Installation & Running

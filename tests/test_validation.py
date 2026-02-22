@@ -5,7 +5,13 @@ This script shows how the validation module correctly identifies mismatched list
 and corrects them using fuzzy matching.
 """
 
-from validation import validate_listing
+import sys
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from gpuutje_kopen.validation import validate_listing
 
 
 def test_validation():
