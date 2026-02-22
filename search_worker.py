@@ -9,6 +9,7 @@ from marktplaats import SearchQuery, category_from_name
 
 from main import GPU_LIST
 from storage import save_result
+from validation import validate_listing
 
 
 logging.basicConfig(level=logging.INFO)
@@ -69,6 +70,20 @@ def search_gpu(gpu: object) -> int:
                         except Exception:
                             location_str = None
                     
+                    # Validate listing matches the correct GPU
+                    is_valid, corrected_gpu, match_score = validate_listing(gpu.name, title)
+                    
+                    if not is_valid:
+                        log.debug(f"Listing rejected (low match score): '{title[:50]}...' (score: {match_score:.1f})")
+                        continue
+                    
+                    # Determine which GPU to save under
+                    target_gpu = corrected_gpu if corrected_gpu else gpu.name
+                    
+                    # Log corrections
+                    if corrected_gpu:
+                        log.info(f"Listing corrected: '{title[:50]}...' -> {gpu.name} corrected to {corrected_gpu} (score: {match_score:.1f})")
+                    
                     data = {
                         "title": title,
                         "price": price,
@@ -76,7 +91,7 @@ def search_gpu(gpu: object) -> int:
                         "date": date.isoformat() if date else None,
                         "location": location_str,
                     }
-                    save_result(gpu.name, data)
+                    save_result(target_gpu, data)
                     found += 1
                 except Exception as e:
                     log.debug(f"Error processing listing: {e}")

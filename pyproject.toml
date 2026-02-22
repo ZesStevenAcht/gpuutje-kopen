@@ -9,4 +9,5 @@ dependencies = [
     "flask>=3.0.0",
     "plotly>=5.17.0",
     "pandas>=2.0.0",
+    "rapidfuzz>=2.0.0",
 ]
