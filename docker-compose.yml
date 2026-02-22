@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
   gpuutje-kopen:
-    build: .
+    image: ghcr.io/zessstevenacht/gpuutje-kopen:latest
     container_name: gpuutje-kopen-app
     ports:
       - "5000:5000"
     volumes:
-      # Mount the data directory to persist results.json on the host
-      - ./data:/app/data
+      # Named volume to persist results.json across container restarts
+      - gpuutje-data:/app/data
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
@@ -16,3 +16,8 @@ services:
     # Run with unbuffered output to see logs in real-time
     stdin_open: true
     tty: true
+
+volumes:
+  # Named volume managed by Docker for persistent storage
+  gpuutje-data:
+    driver: local
