@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPU Price Tracker</title>
+    <title>GPUutje kopen?</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
@@ -24,53 +24,6 @@
         .header p {
             color: #7f8c8d;
             font-size: 14px;
-        }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px 12px 0 0;
-            padding: 15px 20px;
-            font-weight: 600;
-            border: none;
-        }
-        .graph-container {
-            height: 500px;
-            background: white;
-            border-radius: 0 0 12px 12px;
-        }
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .controls label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-        .form-select, .form-control {
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            padding: 10px 12px;
-        }
-        .form-select:focus, .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 600;
         }
         .btn-primary:hover {
             background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
@@ -125,13 +78,16 @@
             color: #333;
             line-height: 1.45;
         }
+        .main-grid .card { display:flex; flex-direction:column; }
+        .main-grid .card .graph-container { flex: 1 1 auto; }
+        .description-body { background: white; padding: 20px; border-radius: 0 0 12px 12px; display:flex; flex-direction:column; justify-content:center; }
         @media (min-width: 1000px) {
             .main-grid {
                 grid-template-columns: 1fr 1fr;
                 align-items: start;
             }
-            .main-grid .card { height: auto; }
-            .graph-container { height: 420px; }
+            .main-grid .card { min-height: 420px; }
+            .graph-container { height: 100%; }
         }
         @media (max-width: 768px) {
             .graph-container {
@@ -148,7 +104,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>🎮 GPU Price Tracker</h1>
+        <h1>GPUutje kopen?</h1>
         <p id="lastUpdate">Data loading...</p>
     </div>
 
@@ -157,14 +113,35 @@
     </div>
 
     <div class="main-grid">
-        <div class="card description-card">
-            <div class="card-header">GPUutje kopen!</div>
-            <div style="background: white; padding: 20px; border-radius: 0 0 12px 12px;">
-                <p>Dit is een simpel dashboard die voor een vaste lijst aan GPUs automatisch aanbiedingen op marktplaats opzoekt en bijhoud. Op basis van https://github.com/XiongjieDai/GPU-Benchmarks-on-LLM-Inference heb ik een lijst opgesteld van kaarten, met VRAM en verwachte tokens/s op LLama3.1:8b. Als de kaart niet in de lijst van geteste kaarten staat, zijn de token/s automatisch ingevuld, op basis van vergelijkbare kaarten in de geteste lijst.</p>
-                <p><strong>Let op:</strong> Deze website verzameld alleen aanbiedingen en geeft statistieken op basis van aannames. De aankoop is altijd 100% je eigen verantwoordelijkheid</p>
+        <!-- Tokens vs Price -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Tokens/s vs Avg Price</span>
+                <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
+                    <option value="1">Last 1 Day</option>
+                    <option value="7" selected>Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="all">All Time</option>
+                </select>
             </div>
+            <div id="tokensGraph" class="graph-container"></div>
         </div>
 
+        <!-- VRAM vs Price -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>VRAM vs Avg Price</span>
+                <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
+                    <option value="1">Last 1 Day</option>
+                    <option value="7" selected>Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <div id="vramGraph" class="graph-container"></div>
+        </div>
+
+        <!-- Price Graph -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Price Trend</span>
@@ -182,30 +159,13 @@
             <div id="priceGraph" class="graph-container"></div>
         </div>
 
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>VRAM vs Avg Price</span>
-                <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
-                    <option value="1">Last 1 Day</option>
-                    <option value="7" selected>Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="all">All Time</option>
-                </select>
+        <!-- Description -->
+        <div class="card description-card">
+            <div class="card-header">GPUutje kopen!</div>
+            <div class="description-body">
+                <p>Dit dashboard zoekt en houdt automatisch aanbiedingen op Marktplaats bij voor een vaste lijst GPUs. VRAM en tokens/s komen uit een benchmarklijst; niet-geteste kaarten krijgen een geschatte tokens/s op basis van vergelijkbare modellen.</p>
+                <p><strong>Let op:</strong> Deze website verzamelt alleen aanbiedingen en geeft statistieken op basis van aannames. De aankoop is altijd 100% je eigen verantwoordelijkheid. Zie <a href="https://github.com/XiongjieDai/GPU-Benchmarks-on-LLM-Inference" target="_blank">GPU-Benchmarks-on-LLM-Inference</a> voor de bron.</p>
             </div>
-            <div id="vramGraph" class="graph-container"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Tokens/s vs Avg Price</span>
-                <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
-                    <option value="1">Last 1 Day</option>
-                    <option value="7" selected>Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="all">All Time</option>
-                </select>
-            </div>
-            <div id="tokensGraph" class="graph-container"></div>
         </div>
     </div>
 
@@ -248,6 +208,14 @@
                         <select id="sortOrderSelect" class="form-select">
                             <option value="desc" selected>Descending</option>
                             <option value="asc">Ascending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-2">
+                        <label>Show</label>
+                        <select id="pageSizeSelect" class="form-select">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="50">50</option>
                         </select>
                     </div>
                     <div class="col-md-6 col-lg-3 mb-2 d-flex align-items-end">
@@ -445,6 +413,8 @@
 
             const resp = await fetch(`/api/results?${params}`);
             const results = await resp.json();
+            const pageSize = parseInt(document.getElementById('pageSizeSelect')?.value || '10', 10);
+            const limited = results.slice(0, pageSize);
             
             const tbody = document.getElementById("resultsTable");
             if (results.length === 0) {
@@ -452,7 +422,7 @@
                 return;
             }
             
-            tbody.innerHTML = results.map(r => `
+            tbody.innerHTML = limited.map(r => `
                 <tr>
                     <td><strong>${r.gpu}</strong><br><small class="text-muted">VRAM: ${r.vram}GB, Tokens/s: ${r.tokens}</small></td>
                     <td>${r.title.substring(0, 60)}</td>
@@ -474,12 +444,15 @@
             updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect")
         );
 
+        const pageSizeElem = document.getElementById('pageSizeSelect');
+        if (pageSizeElem) pageSizeElem.addEventListener('change', loadResults);
+
         // Initial load
         async function init() {
             await updateStats();
             await loadGpus();
-            await updateScatterGraph("vramGraph", "vram", "vramDaysSelect");
             await updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect");
+            await updateScatterGraph("vramGraph", "vram", "vramDaysSelect");
             await loadResults();
             
             // Refresh stats every 10 seconds
