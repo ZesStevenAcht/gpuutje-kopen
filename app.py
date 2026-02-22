@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from main import GPU_LIST
 from storage import load_results, get_results_by_gpu, get_latest_listings
-from analytics import calc_price_history, get_avg_price_period, find_pareto_front
+from analytics import calc_price_history, get_avg_price_period
 from search_worker import start_worker_thread
 
 
@@ -67,7 +67,6 @@ def api_scatter_data():
     days = None if days_str == "all" else int(days_str) if days_str else 7
     
     points = []
-    pareto_idx = set()
     
     for gpu in GPU_LIST:
         results = get_results_by_gpu(gpu.name)
@@ -95,23 +94,12 @@ def api_scatter_data():
             "gpu": gpu.name,
             "vram": gpu.vram,
             "tokens": gpu.tokens_sec,
+            "tokens_tested": gpu.tokens_tested,
             "lowest": lowest,
         })
     
-    # Find Pareto front
-    # Determine Pareto front (price minimize, quality maximize)
-    if points:
-        pairs = [(p["price"], p["quality"]) for p in points]
-        pareto = find_pareto_front(pairs)
-        pareto_pts = set(pareto)
-
-        for i, p in enumerate(points):
-            if (p["price"], p["quality"]) in pareto_pts:
-                pareto_idx.add(i)
-    
     return jsonify({
         "points": points,
-        "pareto_indices": list(pareto_idx),
     })
 
 

@@ -13,8 +13,8 @@ A Flask-based web application that periodically searches for GPUs on Marktplaats
 ### Web Interface
 - **3 Interactive Graphs**:
   - Price trend graph for individual GPUs (with dropdown selector)
-  - VRAM vs Average Price scatter plot with Pareto front highlighting
-  - Tokens/s vs Average Price scatter plot with Pareto front highlighting
+  - VRAM vs Average Price scatter plot
+  - Tokens/s vs Average Price scatter plot (distinguishes tested vs estimated specs)
   - Time period filters (1 day, 7 days, 30 days, all-time)
 
 - **Search Results Table**:
@@ -36,7 +36,7 @@ A Flask-based web application that periodically searches for GPUs on Marktplaats
 ├── app.py                   # Flask web application
 ├── search_worker.py         # Periodic search background worker
 ├── storage.py              # Data persistence (JSON-based)
-├── analytics.py            # Price analysis and Pareto front calculation
+├── analytics.py            # Price analysis and aggregation
 ├── templates/
 │   └── index.html          # Web interface
 ├── data/
@@ -91,7 +91,7 @@ python search_worker.py
 
 3. **Analytics** (`analytics.py`):
    - Calculates price averages over different time periods
-   - Identifies Pareto front (optimal GPU value combinations)
+   - Calculates average prices and statistics
    - Aggregates daily price history
 
 4. **Web App** (`app.py`):
@@ -153,7 +153,7 @@ Edit the form controls in [templates/index.html](templates/index.html)
 - `GET /` - Main web interface
 - `GET /api/gpus` - List of all tracked GPUs
 - `GET /api/price-history/<gpu_name>` - Daily price history for a GPU
-- `GET /api/scatter-data?days=7&metric=vram` - Scatter plot data with Pareto front
+- `GET /api/scatter-data?days=7&metric=vram` - Scatter plot data with GPU specs
 - `GET /api/results` - Search results with filters
 - `GET /api/stats` - Statistics and update info
 

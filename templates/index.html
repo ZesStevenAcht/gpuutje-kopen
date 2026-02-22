@@ -113,10 +113,6 @@
             font-size: 14px;
             color: #7f8c8d;
         }
-        .pareto-point {
-            transform: scale(1.3);
-            filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.6));
-        }
         @media (max-width: 768px) {
             .graph-container {
                 height: 350px;
@@ -322,48 +318,59 @@
             const data = await resp.json();
 
             const points = data.points;
-            const pareto = data.pareto_indices;
 
-            // Regular points
-            const regular = points.filter((_, i) => !pareto.includes(i));
-            const paretoPoints = points.filter((_, i) => pareto.includes(i));
+            // Separate tested and estimated points
+            const tested = points.filter(p => p.tokens_tested === true);
+            const estimated = points.filter(p => p.tokens_tested === false);
 
-            const regularTrace = {
-                x: regular.map(p => p.quality),
-                y: regular.map(p => p.price),
-                customdata: regular.map(p => p.lowest ? p.lowest.link : null),
-                mode: "markers",
-                type: "scatter",
-                text: regular.map(p => p.gpu),
-                marker: {
-                    size: 8,
-                    color: "#667eea",
-                    opacity: 0.8,
-                },
-                hovertemplate: "<b>%{text}</b><br>%{x}<br>€%{y:.0f}<extra></extra>",
-                name: "Cards",
-            };
+            // Helper function to create hover text
+            function createHoverText(p, metric) {
+                const tokensLabel = p.tokens_tested ? `${p.tokens.toFixed(2)} tokens/s` : `${p.tokens.toFixed(2)} tokens/s (est.)`;
+                const metricValue = metric === "vram" ? `${p.vram} GB vram` : tokensLabel;
+                const otherValue = metric === "vram" ? tokensLabel : `${p.vram} GB vram`;
+                return `<b>${p.gpu}</b><br>${otherValue}<br>${metricValue}`;
+            }
 
-            let traces = [regularTrace];
+            const traces = [];
 
-            if (paretoPoints.length > 0) {
-                const paretoTrace = {
-                    x: paretoPoints.map(p => p.quality),
-                    y: paretoPoints.map(p => p.price),
-                    customdata: paretoPoints.map(p => p.lowest ? p.lowest.link : null),
+            // Tested GPUs trace
+            if (tested.length > 0) {
+                const testedTrace = {
+                    x: tested.map(p => p.quality),
+                    y: tested.map(p => p.price),
+                    customdata: tested.map(p => p.lowest ? p.lowest.link : null),
                     mode: "markers",
                     type: "scatter",
-                    text: paretoPoints.map(p => p.gpu),
+                    text: tested.map(p => createHoverText(p, metric)),
                     marker: {
-                        size: 12,
-                        color: "#ff6b6b",
-                        symbol: "star",
-                        line: {color: "white", width: 2},
+                        size: 8,
+                        color: "#667eea",
+                        opacity: 0.8,
                     },
-                    hovertemplate: "<b>%{text}</b><br>%{x}<br>€%{y:.0f}<extra></extra>",
-                    name: "Pareto Front",
+                    hovertemplate: "%{text}<extra></extra>",
+                    name: "Tested",
                 };
-                traces.push(paretoTrace);
+                traces.push(testedTrace);
+            }
+
+            // Estimated GPUs trace (different color)
+            if (estimated.length > 0) {
+                const estimatedTrace = {
+                    x: estimated.map(p => p.quality),
+                    y: estimated.map(p => p.price),
+                    customdata: estimated.map(p => p.lowest ? p.lowest.link : null),
+                    mode: "markers",
+                    type: "scatter",
+                    text: estimated.map(p => createHoverText(p, metric)),
+                    marker: {
+                        size: 8,
+                        color: "#a78bfa",
+                        opacity: 0.6,
+                    },
+                    hovertemplate: "%{text}<extra></extra>",
+                    name: "Estimated",
+                };
+                traces.push(estimatedTrace);
             }
 
             const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
