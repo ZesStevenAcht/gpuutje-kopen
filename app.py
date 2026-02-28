@@ -13,21 +13,54 @@ from datetime import datetime, timedelta
 from gpuutje_kopen.gpu_list import GPU_LIST
 from gpuutje_kopen.storage import load_results, get_results_by_gpu, get_latest_listings
 from gpuutje_kopen.analytics import calc_price_history, get_avg_price_period
-from gpuutje_kopen.search_worker import start_worker_thread
+from gpuutje_kopen.search_worker import start_worker_thread, stop_worker_thread
 
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
 
-# Start search worker only in main process (not in Flask reloader)
-def _init_worker():
-    """Initialize worker thread (called once on startup)."""
-    import os
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        start_worker_thread()
+# Start search worker globally, but only once per process.
+# The worker thread is marked as daemon so it will exit when the
+# main process terminates. We launch it on the first HTTP request to
+# avoid issues with the Flask reloader and to make sure we're running
+# in the correct process.
 
-_init_worker()
+_worker_thread = None
 
+def _ensure_worker_running():
+    """Start the background worker thread if not already running."""
+    global _worker_thread
+    # If there is an existing thread and it's alive we leave it alone
+    if _worker_thread and _worker_thread.is_alive():
+        return
+    # Otherwise start a fresh thread
+    _worker_thread = start_worker_thread()
+
+
+# Flask 3.1 removed ``before_first_request``; use ``before_request``
+# and guard with our own check so the worker only starts once per
+# process. ``_ensure_worker_running`` is idempotent.
+@app.before_request
+
+def _start_worker():
+    _ensure_worker_running()
+
+
+import atexit
+import signal
+import sys
+
+# ensure worker is stopped at process exit via atexit
+atexit.register(stop_worker_thread)
+
+# also handle termination signals so we can signal the thread before
+# exiting. this is useful when the process is killed with SIGTERM/INT.
+def _handle_shutdown(signum, frame):
+    stop_worker_thread()
+    sys.exit(0)
+
+for sig in (signal.SIGINT, signal.SIGTERM):
+    signal.signal(sig, _handle_shutdown)
 
 @app.route("/")
 def index():

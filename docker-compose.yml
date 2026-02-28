@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   gpuutje-kopen:
-    image: ghcr.io/zessstevenacht/gpuutje-kopen:latest
+    image: zesstevenacht/gpuutje-kopen:latest
     container_name: gpuutje-kopen-app
     ports:
       - "5000:5000"

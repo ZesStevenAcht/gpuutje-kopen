@@ -3,7 +3,7 @@
 import logging
 import time
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Event
 
 from marktplaats import SearchQuery, category_from_name
 
@@ -15,7 +15,7 @@ from .validation import validate_listing
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-SEARCH_INTERVAL = 8 * 60 * 60  # 8 hours in seconds
+SEARCH_INTERVAL = 300 #8 * 60 * 60  # 8 hours in seconds
 
 
 def search_gpu(gpu: object) -> int:
@@ -127,18 +127,28 @@ def run_search_cycle():
     log.info(f"Search cycle complete. Total results: {total}")
 
 
+# Event used to signal the worker loop to stop. When the
+# main application is exiting we set this event so the loop can
+# terminate gracefully instead of spinning forever.
+_stop_event = Event()
+
 def worker_loop():
-    """Run search loop indefinitely."""
+    """Run search loop until the stop event is set."""
     log.info("Search worker started")
     
-    while True:
+    while not _stop_event.is_set():
         try:
             run_search_cycle()
         except Exception as e:
             log.error(f"Unexpected error in search cycle: {e}")
         
         log.info(f"Next search in {SEARCH_INTERVAL / 3600:.0f} hours")
-        time.sleep(SEARCH_INTERVAL)
+        # Sleep in small increments so we can react to stop event quickly
+        remaining = SEARCH_INTERVAL
+        while remaining > 0 and not _stop_event.is_set():
+            time.sleep(min(1, remaining))
+            remaining -= 1
+    log.info("Search worker stopping")
 
 
 def start_worker_thread():
@@ -147,6 +157,11 @@ def start_worker_thread():
     thread.start()
     log.info("Search worker thread started")
     return thread
+
+
+def stop_worker_thread():
+    """Signal the worker thread to stop and wait briefly."""
+    _stop_event.set()
 
 
 if __name__ == "__main__":

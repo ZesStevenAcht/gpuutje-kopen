@@ -17,7 +17,7 @@ The simplest way to run the application is with just the docker-compose.yml file
 # Download docker-compose.yml to any directory
 curl -o docker-compose.yml https://raw.githubusercontent.com/ZesStevenAcht/gpuutje-kopen/master/docker-compose.yml
 
-# Start the application
+# Start the application (make sure image is public, see troubleshooting below)
 docker-compose up
 ```
 
@@ -169,6 +169,49 @@ docker-compose logs -f gpuutje-kopen
 ```
 
 ## Troubleshooting
+
+### Image Pull Denied (Private Image)
+
+If you get an error like `denied: denied` or `Failed pulling image`, the image is **private** (GHCR's default).
+
+**Solution 1: Make the image public (Recommended)**
+
+1. Go to GitHub: https://github.com/settings/packages
+2. Find the `gpuutje-kopen` package
+3. Click it and go to **Package settings**
+4. Under **Danger Zone**, change visibility from "Private" to "Public"
+5. Now anyone can pull the image
+
+**Solution 2: Authenticate with Personal Access Token**
+
+If you can't make the image public, you can pull it with authentication:
+
+```bash
+# Create a Personal Access Token on GitHub:
+# https://github.com/settings/tokens (select 'read:packages' scope)
+
+# Login to Docker
+echo YOUR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Now docker-compose up will work
+docker-compose up
+```
+
+**Solution 3: Build locally**
+
+If neither option works, build the image locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/ZesStevenAcht/gpuutje-kopen.git
+cd gpuutje-kopen
+
+# Edit docker-compose.yml: replace 'image:' line with 'build: .'
+sed -i 's/image:.*/build: ./g' docker-compose.yml
+
+# Build and run
+docker-compose up --build
+```
 
 ### Port Already in Use
 
