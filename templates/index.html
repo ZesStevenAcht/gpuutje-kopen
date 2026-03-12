@@ -220,6 +220,12 @@
                         </select>
                     </div>
                     <div class="col-md-6 col-lg-3 mb-2 d-flex align-items-end">
+                        <div class="form-check" style="margin-right: 10px;">
+                            <input class="form-check-input" type="checkbox" id="showActiveOnly" checked>
+                            <label class="form-check-label" for="showActiveOnly">
+                                Active only
+                            </label>
+                        </div>
                         <button class="btn btn-primary" id="filterBtn">Apply Filters</button>
                     </div>
                 </div>
@@ -413,7 +419,14 @@
             });
 
             const resp = await fetch(`/api/results?${params}`);
-            const results = await resp.json();
+            let results = await resp.json();
+            
+            // Filter by active status if checkbox is checked
+            const showActiveOnly = document.getElementById("showActiveOnly").checked;
+            if (showActiveOnly) {
+                results = results.filter(r => r.active === true);
+            }
+            
             const pageSize = parseInt(document.getElementById('pageSizeSelect')?.value || '10', 10);
             const limited = results.slice(0, pageSize);
             
@@ -436,6 +449,7 @@
 
         document.getElementById("filterBtn").addEventListener("click", loadResults);
         document.getElementById("priceGroupSelect").addEventListener("change", updatePriceGraph);
+        document.getElementById("showActiveOnly").addEventListener("change", loadResults);
         
         document.getElementById("vramDaysSelect").addEventListener("change", () => 
             updateScatterGraph("vramGraph", "vram", "vramDaysSelect")

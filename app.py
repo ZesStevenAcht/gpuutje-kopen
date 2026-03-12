@@ -50,6 +50,10 @@ import atexit
 import signal
 import sys
 
+# Start the worker thread immediately on app startup (not waiting for first request)
+# This ensures the background search task runs even if no HTTP requests are made
+_ensure_worker_running()
+
 # ensure worker is stopped at process exit via atexit
 atexit.register(stop_worker_thread)
 
