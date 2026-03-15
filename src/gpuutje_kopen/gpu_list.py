@@ -17,12 +17,9 @@ GPU_LIST = [
     GPU("RTX 3080 Ti", 106.71, 12, ["RTX 3080 Ti", "RTX 3080ti", "3080 Ti"], tokens_tested=True),
     GPU("RTX 4070 Ti", 82.21, 12, ["RTX 4070 Ti", "RTX 4070ti", "4070 Ti"], tokens_tested=True),
     GPU("RTX 4080", 106.22, 16, ["RTX 4080", "4080"], tokens_tested=True),
-    GPU("RTX 4000 Ada", 58.59, 20, ["RTX 4000 Ada", "4000 Ada"], tokens_tested=True),
     GPU("RTX 3090", 111.74, 24, ["RTX 3090", "3090"], tokens_tested=True),
     GPU("RTX 4090", 127.74, 24, ["RTX 4090", "4090"], tokens_tested=True),
-    GPU("RTX 5000 Ada", 89.87, 32, ["RTX 5000 Ada", "5000 Ada"], tokens_tested=True),
     GPU("RTX A6000", 102.22, 48, ["RTX A6000", "A6000"], tokens_tested=True),
-    GPU("RTX 6000 Ada", 130.99, 48, ["RTX 6000 Ada", "6000 Ada"], tokens_tested=True),
     GPU("A40", 88.95, 48, ["A40"], tokens_tested=True),
     GPU("L40S", 113.60, 48, ["L40S", "L40"], tokens_tested=True),
     GPU("A100 PCIe", 138.31, 80, ["A100 PCIe", "A100"], tokens_tested=True),
@@ -58,11 +55,4 @@ GPU_LIST = [
     GPU("RTX A5000", 72.0, 24, ["RTX A5000", "A5000"], tokens_tested=False),
     GPU("RTX A4500", 62.0, 20, ["RTX A4500", "A4500"], tokens_tested=False),
     GPU("RTX A5500", 82.0, 24, ["RTX A5500", "A5500"], tokens_tested=False),
-    GPU("A30", 70.0, 24, ["A30"], tokens_tested=False),
-    GPU("A10", 55.0, 24, ["A10"], tokens_tested=False),
-    GPU("T4", 22.0, 16, ["T4"], tokens_tested=False),
-
-    # New Ada workstation cards
-    GPU("RTX 2000 Ada", 32.0, 16, ["RTX 2000 Ada", "2000 Ada"], tokens_tested=False),
-    GPU("RTX 3000 Ada", 45.0, 24, ["RTX 3000 Ada", "3000 Ada"], tokens_tested=False),
 ]

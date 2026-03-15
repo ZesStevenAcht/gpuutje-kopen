@@ -5,14 +5,13 @@ WORKDIR /app
 
 # Install system dependencies (if needed)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the repository
-RUN git clone https://github.com/ZesStevenAcht/gpuutje-kopen.git .
-
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt || pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e .
+
+# Copy local repository files into the container
+COPY . /app
 
 # Ensure data directory exists
 RUN mkdir -p /app/data
@@ -20,8 +19,5 @@ RUN mkdir -p /app/data
 # Expose Flask port
 EXPOSE 5000
 
-# Run the Flask app (search worker runs in background thread)
-COPY start.sh /app/
-RUN chmod +x /app/start.sh
-CMD ["/app/start.sh"]
-
+# Run the Flask app
+CMD ["python", "app.py"]

@@ -5,17 +5,10 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Named volume to persist results.json across container restarts
-      - gpuutje-data:/app/data
+      - /mnt/Main/Apps/Gpuutje-kopen:/app/data
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
     restart: unless-stopped
-    # Run with unbuffered output to see logs in real-time
     stdin_open: true
     tty: true
-
-volumes:
-  # Named volume managed by Docker for persistent storage
-  gpuutje-data:
-    driver: local
