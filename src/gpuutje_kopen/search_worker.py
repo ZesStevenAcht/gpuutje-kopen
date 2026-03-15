@@ -165,4 +165,5 @@ def stop_worker_thread():
 
 
 if __name__ == "__main__":
+    print(f"Starting search worker with interval {SEARCH_INTERVAL} seconds...")
     start_worker_thread()
