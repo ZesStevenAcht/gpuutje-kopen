@@ -125,6 +125,7 @@ def run_search_cycle():
         time.sleep(0.5)  # Be nice to the API
     
     log.info(f"Search cycle complete. Total results: {total}")
+    log.info(f"Next search in {SEARCH_INTERVAL / 3600:.0f} hours")
 
 
 # Event used to signal the worker loop to stop. When the
