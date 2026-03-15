@@ -21,6 +21,7 @@ RUN mkdir -p /app/data
 EXPOSE 5000
 
 # Run the Flask app (search worker runs in background thread)
-RUN chmod +x ./start.sh
-CMD ["./start.sh"]
+COPY start.sh /app/
+RUN chmod +x /app/start.sh
+CMD ["/app/start.sh"]
 
