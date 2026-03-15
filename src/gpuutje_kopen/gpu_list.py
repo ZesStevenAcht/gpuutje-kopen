@@ -57,9 +57,9 @@ GPU_LIST = [
     GPU("RTX A5500", 82.0, 24, ["RTX A5500", "A5500"], tokens_tested=False),
 
     # Quadro RTX (Turing workstation)
-    GPU("Quadro RTX 3000", 30.0, 6, ["Quadro RTX 3000", "RTX 3000 Quadro"], tokens_tested=False),
-    GPU("Quadro RTX 4000", 40.0, 8, ["Quadro RTX 4000", "RTX 4000 Quadro"], tokens_tested=False),
-    GPU("Quadro RTX 5000", 55.0, 16, ["Quadro RTX 5000", "RTX 5000 Quadro"], tokens_tested=False),
-    GPU("Quadro RTX 6000", 66.0, 24, ["Quadro RTX 6000", "RTX 6000 Quadro"], tokens_tested=False),
-    GPU("Quadro RTX 8000", 66.0, 48, ["Quadro RTX 8000", "RTX 8000 Quadro"], tokens_tested=False),
+    GPU("RTX 3000", 30.0, 6, ["RTX 3000", "RTX 3000"], tokens_tested=False),
+    GPU("RTX 4000", 40.0, 8, ["RTX 4000", "RTX 4000"], tokens_tested=False),
+    GPU("RTX 5000", 55.0, 16, ["RTX 5000", "RTX 5000"], tokens_tested=False),
+    GPU("RTX 6000", 66.0, 24, ["RTX 6000", "RTX 6000"], tokens_tested=False),
+    GPU("RTX 8000", 66.0, 48, ["RTX 8000", "RTX 8000"], tokens_tested=False),
 ]

@@ -15,7 +15,7 @@ from .validation import validate_listing
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-SEARCH_INTERVAL = 1 * 60 * 60  # 1 hour in seconds
+SEARCH_INTERVAL = 300 #1 * 60 * 60  # 1 hour in seconds
 
 
 def search_gpu(gpu: object) -> int:
