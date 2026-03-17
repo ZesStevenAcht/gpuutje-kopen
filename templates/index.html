@@ -378,13 +378,25 @@
             const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
             const layout = {
                 xaxis: {title: xLabel, gridcolor: "#e0e0e0"},
-                yaxis: {title: "Avg Price (€)", gridcolor: "#e0e0e0"},
+                yaxis: {
+                    title: "Avg Price (€)",
+                    gridcolor: "#e0e0e0",
+                    range: [0, 1500] // Set default y-axis bounds
+                },
                 hovermode: "closest",
                 margin: {l: 50, r: 20, t: 40, b: 40},
                 plot_bgcolor: "#fafbfc",
                 paper_bgcolor: "white",
                 showlegend: true,
+                legend: {
+                    orientation: "v", // Vertical legend
+                    yanchor: "bottom",
+                    y: 0.80, // Position inside
+                    xanchor: "left",
+                    x: 0.01 // Align to the left
+                }
             };
+
 
             await Plotly.newPlot(graphId, traces, layout, {responsive: true});
 
