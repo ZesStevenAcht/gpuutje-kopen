@@ -6,15 +6,21 @@ from pathlib import Path
 # Add src to path so we can import the package
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-import json
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
 
-from gpuutje_kopen.gpu_list import GPU_LIST
-from gpuutje_kopen.storage import load_results, get_results_by_gpu, get_latest_listings
+from flask import Flask, render_template, request, jsonify
+
+from gpuutje_kopen.gpu_loading import load_gpu_list
+from gpuutje_kopen.storage import load_results, get_results_by_gpu
 from gpuutje_kopen.analytics import calc_price_history, get_avg_price_period
 from gpuutje_kopen.search_worker import start_worker_thread, stop_worker_thread
 
+
+import atexit
+import signal
+import sys
+
+
+GPU_LIST = load_gpu_list("data/gpus.json")
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
@@ -45,10 +51,6 @@ def _ensure_worker_running():
 def _start_worker():
     _ensure_worker_running()
 
-
-import atexit
-import signal
-import sys
 
 # Start the worker thread immediately on app startup (not waiting for first request)
 # This ensures the background search task runs even if no HTTP requests are made
@@ -114,10 +116,12 @@ def api_scatter_data():
     for gpu in GPU_LIST:
         results = get_results_by_gpu(gpu.name)
         if not results:
+            print(f"No results for {gpu.name}")
             continue
         
         avg_price = get_avg_price_period(results, days)
         if avg_price <= 0:
+            print(f"Price for {gpu.name} below 0")
             continue
         # quality is VRAM or tokens (to maximize), price is avg_price (to minimize)
         quality = gpu.vram if metric == "vram" else gpu.tokens_sec

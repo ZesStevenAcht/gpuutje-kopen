@@ -1,7 +1,9 @@
 """Listing validation using fuzzy matching for GPU correctness."""
 
 from rapidfuzz import fuzz
-from .gpu_list import GPU_LIST
+from .gpu_loading import load_gpu_list
+
+GPU_LIST = load_gpu_list("data/gpus.json")
 
 
 def find_best_gpu_match(title: str) -> tuple[str, float]:

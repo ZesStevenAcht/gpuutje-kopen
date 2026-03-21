@@ -2,7 +2,11 @@
 
 from datetime import datetime, timedelta
 from statistics import mean
+import logging
 
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 def get_avg_price_period(results: list[dict], days: int | None) -> float:
     """Get average price over a period."""
@@ -16,6 +20,7 @@ def get_avg_price_period(results: list[dict], days: int | None) -> float:
         cutoff = datetime.now() - timedelta(days=days)
         prices = []
         for r in results:
+            
             if not isinstance(r.get("price"), (int, float)):
                 continue
             # Prefer listing 'date' if present, fallback to stored 'timestamp'

@@ -1,0 +1,289 @@
+[
+    {
+        "name": "RTX 3070",
+        "tokens_sec": 70.94,
+        "vram": 8,
+        "search_queries": ["RTX 3070", "3070"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 3080",
+        "tokens_sec": 106.4,
+        "vram": 10,
+        "search_queries": ["RTX 3080", "3080"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 3080 Ti",
+        "tokens_sec": 106.71,
+        "vram": 12,
+        "search_queries": ["RTX 3080 Ti", "RTX 3080ti", "3080 Ti"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 4070 Ti",
+        "tokens_sec": 82.21,
+        "vram": 12,
+        "search_queries": ["RTX 4070 Ti", "RTX 4070ti", "4070 Ti"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 4080",
+        "tokens_sec": 106.22,
+        "vram": 16,
+        "search_queries": ["RTX 4080", "4080"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 3090",
+        "tokens_sec": 111.74,
+        "vram": 24,
+        "search_queries": ["RTX 3090", "3090"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 4090",
+        "tokens_sec": 127.74,
+        "vram": 24,
+        "search_queries": ["RTX 4090", "4090"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX A6000",
+        "tokens_sec": 102.22,
+        "vram": 48,
+        "search_queries": ["RTX A6000", "A6000"],
+        "tokens_tested": true
+    },
+    {
+        "name": "A40",
+        "tokens_sec": 88.95,
+        "vram": 48,
+        "search_queries": ["A40"],
+        "tokens_tested": true
+    },
+    {
+        "name": "L40S",
+        "tokens_sec": 113.6,
+        "vram": 48,
+        "search_queries": ["L40S", "L40"],
+        "tokens_tested": true
+    },
+    {
+        "name": "A100 PCIe",
+        "tokens_sec": 138.31,
+        "vram": 80,
+        "search_queries": ["A100 PCIe", "A100"],
+        "tokens_tested": true
+    },
+    {
+        "name": "A100 SXM",
+        "tokens_sec": 133.38,
+        "vram": 80,
+        "search_queries": ["A100 SXM"],
+        "tokens_tested": true
+    },
+    {
+        "name": "RTX 2060",
+        "tokens_sec": 28.0,
+        "vram": 6,
+        "search_queries": ["RTX 2060", "2060"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 2070",
+        "tokens_sec": 38.0,
+        "vram": 8,
+        "search_queries": ["RTX 2070", "2070"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 2080",
+        "tokens_sec": 52.0,
+        "vram": 8,
+        "search_queries": ["RTX 2080", "2080"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 2080 Ti",
+        "tokens_sec": 65.0,
+        "vram": 11,
+        "search_queries": ["RTX 2080 Ti", "2080 Ti"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3060",
+        "tokens_sec": 48.0,
+        "vram": 12,
+        "search_queries": ["RTX 3060", "3060"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3060 Ti",
+        "tokens_sec": 60.0,
+        "vram": 8,
+        "search_queries": ["RTX 3060 Ti", "3060 Ti"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3070 Ti",
+        "tokens_sec": 75.0,
+        "vram": 8,
+        "search_queries": ["RTX 3070 Ti", "3070 Ti"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3080 12GB",
+        "tokens_sec": 112.0,
+        "vram": 12,
+        "search_queries": ["RTX 3080 12GB", "3080 12GB"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3090 Ti",
+        "tokens_sec": 118.0,
+        "vram": 24,
+        "search_queries": ["RTX 3090 Ti", "3090 Ti"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4060",
+        "tokens_sec": 40.0,
+        "vram": 8,
+        "search_queries": ["RTX 4060", "4060"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4060 Ti",
+        "tokens_sec": 52.0,
+        "vram": 8,
+        "search_queries": ["RTX 4060 Ti", "4060 Ti"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4070",
+        "tokens_sec": 70.0,
+        "vram": 12,
+        "search_queries": ["RTX 4070", "4070"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4070 Super",
+        "tokens_sec": 78.0,
+        "vram": 12,
+        "search_queries": ["RTX 4070 Super", "4070 Super"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4070 Ti Super",
+        "tokens_sec": 92.0,
+        "vram": 16,
+        "search_queries": ["RTX 4070 Ti Super", "4070 Ti Super"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4080 Super",
+        "tokens_sec": 112.0,
+        "vram": 16,
+        "search_queries": ["RTX 4080 Super", "4080 Super"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX A4000",
+        "tokens_sec": 52.0,
+        "vram": 16,
+        "search_queries": ["RTX A4000", "A4000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX A5000",
+        "tokens_sec": 72.0,
+        "vram": 24,
+        "search_queries": ["RTX A5000", "A5000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX A4500",
+        "tokens_sec": 62.0,
+        "vram": 20,
+        "search_queries": ["RTX A4500", "A4500"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX A5500",
+        "tokens_sec": 82.0,
+        "vram": 24,
+        "search_queries": ["RTX A5500", "A5500"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 3000",
+        "tokens_sec": 30.0,
+        "vram": 6,
+        "search_queries": ["RTX 3000", "RTX 3000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 4000",
+        "tokens_sec": 40.0,
+        "vram": 8,
+        "search_queries": ["RTX 4000", "RTX 4000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 5000",
+        "tokens_sec": 55.0,
+        "vram": 16,
+        "search_queries": ["RTX 5000", "RTX 5000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 6000",
+        "tokens_sec": 66.0,
+        "vram": 24,
+        "search_queries": ["RTX 6000", "RTX 6000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "RTX 8000",
+        "tokens_sec": 66.0,
+        "vram": 48,
+        "search_queries": ["RTX 8000", "RTX 8000"],
+        "tokens_tested": false
+    },
+    {
+        "name": "TITAN X (Maxwell)",
+        "tokens_sec": 22.0,
+        "vram": 12,
+        "search_queries": ["Titan X Maxwell", "GTX Titan X Maxwell", "Titan X 2015"],
+        "tokens_tested": false
+    },
+    {
+        "name": "TITAN X (Pascal)",
+        "tokens_sec": 45.0,
+        "vram": 12,
+        "search_queries": ["Titan X Pascal", "GTX Titan X Pascal", "Titan X 2016"],
+        "tokens_tested": false
+    },
+    {
+        "name": "TITAN Xp",
+        "tokens_sec": 50.0,
+        "vram": 12,
+        "search_queries": ["Titan Xp", "GTX Titan Xp"],
+        "tokens_tested": false
+    },
+    {
+        "name": "TITAN V",
+        "tokens_sec": 75.0,
+        "vram": 12,
+        "search_queries": ["Titan V", "NVIDIA Titan V"],
+        "tokens_tested": false
+    },
+    {
+        "name": "TITAN RTX",
+        "tokens_sec": 95.0,
+        "vram": 24,
+        "search_queries": ["Titan RTX", "NVIDIA Titan RTX"],
+        "tokens_tested": false
+    }
+]
