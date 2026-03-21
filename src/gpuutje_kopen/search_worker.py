@@ -57,8 +57,8 @@ def search_gpu(gpu: object) -> int:
                     # Skip listings with no price or extremely low price
                     if price is None:
                         continue
-                    # Exclude listings below €50
-                    if price < 50:
+                    # Exclude listings below €150
+                    if price < 150:
                         continue
                     
                     # Extract location city safely (avoid Python repr strings)

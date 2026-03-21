@@ -220,70 +220,63 @@
         "name": "RTX 3000",
         "tokens_sec": 30.0,
         "vram": 6,
-        "search_queries": ["RTX 3000", "RTX 3000"],
+        "search_queries": ["RTX 3000", "quaddro 3000"],
         "tokens_tested": false
     },
     {
         "name": "RTX 4000",
         "tokens_sec": 40.0,
         "vram": 8,
-        "search_queries": ["RTX 4000", "RTX 4000"],
+        "search_queries": ["RTX 4000", "quaddro 4000"],
         "tokens_tested": false
     },
     {
         "name": "RTX 5000",
         "tokens_sec": 55.0,
         "vram": 16,
-        "search_queries": ["RTX 5000", "RTX 5000"],
+        "search_queries": ["RTX 5000", "quaddro 5000"],
         "tokens_tested": false
     },
     {
         "name": "RTX 6000",
         "tokens_sec": 66.0,
         "vram": 24,
-        "search_queries": ["RTX 6000", "RTX 6000"],
+        "search_queries": ["RTX 6000", "quaddro 6000"],
         "tokens_tested": false
     },
     {
         "name": "RTX 8000",
         "tokens_sec": 66.0,
         "vram": 48,
-        "search_queries": ["RTX 8000", "RTX 8000"],
+        "search_queries": ["RTX 8000", "quaddro 8000"],
         "tokens_tested": false
     },
     {
-        "name": "TITAN X (Maxwell)",
-        "tokens_sec": 22.0,
+        "name": "TITAN X",
+        "tokens_sec": 30.0,
         "vram": 12,
-        "search_queries": ["Titan X Maxwell", "GTX Titan X Maxwell", "Titan X 2015"],
-        "tokens_tested": false
-    },
-    {
-        "name": "TITAN X (Pascal)",
-        "tokens_sec": 45.0,
-        "vram": 12,
-        "search_queries": ["Titan X Pascal", "GTX Titan X Pascal", "Titan X 2016"],
+        "search_queries": ["Titan X"],
         "tokens_tested": false
     },
     {
         "name": "TITAN Xp",
         "tokens_sec": 50.0,
         "vram": 12,
-        "search_queries": ["Titan Xp", "GTX Titan Xp"],
+        "search_queries": ["Titan Xp"],
         "tokens_tested": false
     },
     {
         "name": "TITAN V",
-        "tokens_sec": 75.0,
+        "tokens_sec": 60.0,
         "vram": 12,
-        "search_queries": ["Titan V", "NVIDIA Titan V"],
+        "search_queries": ["Titan V"],
         "tokens_tested": false
     },
     {
         "name": "TITAN RTX",
-        "tokens_sec": 95.0,
+        "tokens_sec": 70,
         "vram": 24,
-        "search_queries": ["Titan RTX", "NVIDIA Titan RTX"],
+        "search_queries": ["Titan RTX"],
         "tokens_tested": false
     }
 ]
