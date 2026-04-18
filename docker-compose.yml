@@ -31,8 +31,9 @@ services:
       - "5000:5000"   # Public dashboard
       - "5001:5001"   # Admin panel
     volumes:
-      # Change the left side to any directory on your host machine
-      - /mnt/Main/Apps/Gpuutje-kopen:/app/data
+      # Uncomment and change the left side to persist data across rebuilds.
+      # The database is preserved on the volume between container restarts.
+      #- /path/to/your/local/data:/app/data
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
