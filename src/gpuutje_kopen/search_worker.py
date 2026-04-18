@@ -6,165 +6,171 @@ from threading import Thread, Event
 
 from marktplaats import SearchQuery, category_from_name
 
-from .gpu_loading import load_gpu_list
-from .storage import save_result, mark_active_listings
-from .validation import validate_listing
-
+from .db import GPU, load_gpu_list, save_listing, mark_active_listings, get_gpu, is_price_outlier, save_as_outlier, sweep_outliers, dedup_tables, revalidate_listings, revalidate_outliers, get_setting, set_setting, _conn
+from .validation import validate_listing, reload_gpu_cache
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-SEARCH_INTERVAL = 300 #1 * 60 * 60  # 1 hour in seconds
+SEARCH_INTERVAL = 300  # default fallback
 
 
-def search_gpu(gpu: object) -> int:
-    """Search for a GPU and save results."""
+def get_search_interval() -> int:
+    try:
+        return int(get_setting("search_interval", str(SEARCH_INTERVAL)))
+    except (ValueError, TypeError):
+        return SEARCH_INTERVAL
+
+
+def set_search_interval(seconds: int):
+    seconds = max(60, min(seconds, 3600))  # clamp 1min–1hr
+    set_setting("search_interval", str(seconds))
+
+
+def search_gpu(gpu: GPU, gpu_by_id: dict[str, GPU]) -> int:
+    """Search for a GPU and save results. Returns count of saved listings."""
     found = 0
     found_ids: set[str] = set()
-    
+
     for query_str in gpu.search_queries:
         try:
-            search = SearchQuery(
+            listings = SearchQuery(
                 query=query_str,
                 zip_code="1016LV",
                 distance=100000000,
                 limit=100,
                 category=category_from_name("Videokaarten"),
-            )
-            listings = search.get_listings()
-            
+            ).get_listings()
+
             for listing in listings:
                 try:
-                    # Safe extraction of listing data
-                    title = getattr(listing, "title", "Unknown")
+                    title = str(getattr(listing, "title", "Unknown") or "Unknown")
                     price = getattr(listing, "price", None)
-                    link = getattr(listing, "link", "")
-                    date = getattr(listing, "date", None)
-                    listing_id = getattr(listing, "id", None)
-                    location = getattr(listing, "location", None)
-                    
-                    # Ensure title is string
-                    if not isinstance(title, str):
-                        title = str(title) if title else "Unknown"
-                    
-                    # Ensure price is numeric
                     if price is not None:
                         try:
                             price = float(price)
                         except (ValueError, TypeError):
-                            price = None
-                    
-                    # Skip listings with no price or extremely low price
-                    if price is None:
+                            continue
+                    if price is None or price < 150:
                         continue
-                    # Exclude listings below €150
-                    if price < 150:
-                        continue
-                    
-                    # Extract location city safely (avoid Python repr strings)
+
+                    link = getattr(listing, "link", "")
+                    date = getattr(listing, "date", None)
+                    listing_id = getattr(listing, "id", None)
+                    location = getattr(listing, "location", None)
                     location_str = None
                     if location:
                         try:
-                            # Try to get city from location object
-                            city = getattr(location, "city", None)
-                            location_str = city if city else None
+                            location_str = getattr(location, "city", None)
                         except Exception:
-                            location_str = None
-                    
-                    # Validate listing matches the correct GPU
-                    is_valid, corrected_gpu, match_score = validate_listing(gpu.name, title)
-                    
+                            pass
+
+                    is_valid, corrected_id, score = validate_listing(gpu.id, title)
                     if not is_valid:
-                        log.debug(f"Listing rejected (low match score): '{title[:50]}...' (score: {match_score:.1f})")
                         continue
-                    
-                    # Determine which GPU to save under
-                    target_gpu = corrected_gpu if corrected_gpu else gpu.name
-                    
-                    # Log corrections
-                    if corrected_gpu:
-                        log.info(f"Listing corrected: '{title[:50]}...' -> {gpu.name} corrected to {corrected_gpu} (score: {match_score:.1f})")
-                    
-                    data = {
+
+                    target_id = corrected_id or gpu.id
+                    if corrected_id:
+                        target = gpu_by_id.get(target_id)
+                        log.info(f"Corrected: '{title[:50]}' -> {target.name if target else target_id}")
+
+                    listing_data = {
+                        "id": str(listing_id) if listing_id is not None else None,
                         "title": title,
                         "price": price,
                         "link": link,
                         "date": date.isoformat() if date else None,
                         "location": location_str,
-                        "id": str(listing_id) if listing_id is not None else None,
                     }
-                    save_result(target_gpu, data)
+
+                    # Check price outlier before saving
+                    outlier, reason = is_price_outlier(target_id, price)
+                    if outlier:
+                        save_as_outlier(target_id, listing_data, reason)
+                        log.info(f"Outlier: '{title[:50]}' ({reason})")
+                        continue
+
+                    save_listing(target_id, listing_data)
                     if listing_id is not None:
                         found_ids.add(str(listing_id))
                     found += 1
                 except Exception as e:
                     log.debug(f"Error processing listing: {e}")
-                    
+
         except Exception as e:
             log.error(f"Error searching '{query_str}' for {gpu.name}: {e}")
-    # After processing all queries for this GPU, mark active listings
-    try:
-        if found_ids:
-            mark_active_listings(gpu.name, found_ids)
-    except Exception as e:
-        log.debug(f"Error marking active listings for {gpu.name}: {e}")
-    
+
+    if found_ids:
+        try:
+            mark_active_listings(gpu.id, found_ids)
+        except Exception as e:
+            log.debug(f"Error marking active for {gpu.name}: {e}")
+
     return found
 
 
 def run_search_cycle():
     """Run one complete search cycle through all GPUs."""
     log.info("Starting search cycle...")
+    reload_gpu_cache()
+    gpus = load_gpu_list()
+    gpu_by_id = {g.id: g for g in gpus}
     total = 0
-
-    GPU_LIST = load_gpu_list("data/gpus.json")
-    
-    for gpu in GPU_LIST:
-        count = search_gpu(gpu)
+    for gpu in gpus:
+        count = search_gpu(gpu, gpu_by_id)
         total += count
         log.info(f"Found {count} listings for {gpu.name}")
-        time.sleep(0.5)  # Be nice to the API
-    
-    log.info(f"Search cycle complete. Total results: {total}")
+        time.sleep(0.5)
+
+    # Re-validate listings against current matching algorithm
+    rv = revalidate_listings()
+    if rv["deleted"] or rv["corrected"]:
+        log.info(f"Revalidation (listings): {rv['deleted']} deleted, {rv['corrected']} corrected")
+
+    rv2 = revalidate_outliers()
+    if rv2["deleted"] or rv2["corrected"]:
+        log.info(f"Revalidation (outliers): {rv2['deleted']} deleted, {rv2['corrected']} corrected")
+
+    # Sweep existing listings for outliers and restore false positives
+    result = sweep_outliers()
+    if result["moved"] or result["restored"]:
+        log.info(f"Outlier sweep: {result['moved']} moved, {result['restored']} restored")
+
+    # Deduplicate both tables by listing_id and link
+    dupes = dedup_tables()
+    if dupes["listings"] or dupes["outliers"]:
+        log.info(f"Dedup: {dupes['listings']} listing dupes, {dupes['outliers']} outlier dupes removed")
+
+    log.info(f"Search cycle complete. Total: {total}")
 
 
-# Event used to signal the worker loop to stop. When the
-# main application is exiting we set this event so the loop can
-# terminate gracefully instead of spinning forever.
 _stop_event = Event()
 
+
 def worker_loop():
-    """Run search loop until the stop event is set."""
     log.info("Search worker started")
-    
     while not _stop_event.is_set():
         try:
             run_search_cycle()
         except Exception as e:
-            log.error(f"Unexpected error in search cycle: {e}")
-        
-        log.info(f"Next search in {SEARCH_INTERVAL / 3600:.0f} hours")
-        # Sleep in small increments so we can react to stop event quickly
-        remaining = SEARCH_INTERVAL
+            log.error(f"Search cycle error: {e}")
+            try:
+                _conn().rollback()
+            except Exception:
+                pass
+        remaining = get_search_interval()
         while remaining > 0 and not _stop_event.is_set():
             time.sleep(min(1, remaining))
             remaining -= 1
     log.info("Search worker stopping")
 
 
-def start_worker_thread():
-    """Start search worker in a background thread."""
-    thread = Thread(target=worker_loop, daemon=True)
-    thread.start()
+def start_worker_thread() -> Thread:
+    t = Thread(target=worker_loop, daemon=True)
+    t.start()
     log.info("Search worker thread started")
-    return thread
+    return t
 
 
 def stop_worker_thread():
-    """Signal the worker thread to stop and wait briefly."""
     _stop_event.set()
-
-
-if __name__ == "__main__":
-    print(f"Starting search worker with interval {SEARCH_INTERVAL} seconds...")
-    start_worker_thread()

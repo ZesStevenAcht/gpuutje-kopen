@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPUutje Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background:#f8f9fa; padding:20px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+        .header { text-align:center; margin-bottom:30px; }
+        .header h1 { color:#2c3e50; font-weight:700; }
+        .stat-card { background:white; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,.08); text-align:center; }
+        .stat-card .number { font-size:2rem; font-weight:700; color:#667eea; }
+        .stat-card .label { color:#7f8c8d; font-size:.85rem; }
+        .card { border:none; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:20px; }
+        .card-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; font-weight:600; border-radius:12px 12px 0 0!important; }
+        table th { background:#f0f4ff; font-weight:600; }
+        .badge-active { background:#28a745; }
+        .badge-inactive { background:#dc3545; }
+        .btn-action { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; }
+        .btn-action:hover { opacity:.9; color:white; transform:translateY(-1px); }
+        .status-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+        .status-dot.running { background:#28a745; }
+        .status-dot.stopped { background:#dc3545; }
+        .btn-xs { padding:2px 8px; font-size:.78rem; }
+        .editable { cursor:pointer; border-bottom:1px dashed #aaa; }
+        .nav-tabs .nav-link.active { font-weight:600; }
+        .toast-container { position:fixed; top:20px; right:20px; z-index:9999; }
+    </style>
+</head>
+<body>
+
+<!-- Toast notification -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="header">
+    <h1>⚙️ GPUutje Admin</h1>
+    <p class="text-muted">Control panel &amp; statistics &nbsp;·&nbsp; <a href="http://localhost:5000">← Public dashboard</a></p>
+</div>
+
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2"><div class="stat-card"><div class="number" id="totalResults">—</div><div class="label">Total Listings</div></div></div>
+    <div class="col-6 col-md-2"><div class="stat-card"><div class="number" id="activeResults">—</div><div class="label">Active Listings</div></div></div>
+    <div class="col-6 col-md-2"><div class="stat-card"><div class="number" id="trackedGpus">—</div><div class="label">Tracked GPUs</div></div></div>
+    <div class="col-6 col-md-2"><div class="stat-card"><div class="number" id="outlierCount">—</div><div class="label">Outliers</div></div></div>
+    <div class="col-6 col-md-2"><div class="stat-card"><div class="number" id="workerStatus">—</div><div class="label">Worker</div></div></div>
+</div>
+
+<!-- Controls -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Controls</span>
+        <span class="text-white-50" id="lastUpdated"></span>
+    </div>
+    <div class="card-body d-flex gap-3 flex-wrap align-items-center">
+        <button class="btn btn-action" id="triggerSearchBtn">🔍 Trigger Search Now</button>
+        <button class="btn btn-outline-secondary" id="refreshBtn">🔄 Refresh All</button>
+        <span id="searchStatus" class="align-self-center text-muted small"></span>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <label class="small text-muted mb-0">Search interval:</label>
+            <select class="form-select form-select-sm" id="intervalSelect" style="width:130px">
+                <option value="60">1 min</option>
+                <option value="120">2 min</option>
+                <option value="300" selected>5 min</option>
+                <option value="600">10 min</option>
+                <option value="900">15 min</option>
+                <option value="1800">30 min</option>
+                <option value="3600">1 hour</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="mainTabs">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabBreakdown">GPU Breakdown</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabGpuManager">Manage GPUs</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabResults">Browse &amp; Edit Results</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabOutliers">Outliers</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabChart">Distribution Chart</a></li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- ── Tab: GPU Breakdown ──────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tabBreakdown">
+        <div class="card"><div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>GPU</th><th>VRAM</th><th>Tokens/s</th><th>Total</th><th>Active</th><th>Min €</th><th>Max €</th><th></th></tr></thead>
+                    <tbody id="breakdownTable"><tr><td colspan="8" class="text-center text-muted">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+
+    <!-- ── Tab: Manage GPUs ────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tabGpuManager">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>GPU List</span>
+                <button class="btn btn-sm btn-light" id="addGpuBtn">➕ Add GPU</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Name</th><th>VRAM</th><th>Tokens/s</th><th>Tested</th><th>Search Queries</th><th style="width:130px">Actions</th></tr></thead>
+                        <tbody id="gpuTable"><tr><td colspan="6" class="text-center text-muted">Loading…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit GPU modal -->
+        <div class="modal fade" id="gpuModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="gpuModalTitle">Add GPU</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="gpuOriginalName">
+                <div class="mb-3"><label class="form-label">Name</label><input class="form-control" id="gpuName"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="form-label">VRAM (GB)</label><input type="number" class="form-control" id="gpuVram" min="0"></div>
+                    <div class="col-6 mb-3"><label class="form-label">Tokens/s</label><input type="number" step="0.01" class="form-control" id="gpuTokens" min="0"></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Search Queries (comma-separated)</label><input class="form-control" id="gpuQueries" placeholder="RTX 3070, 3070"></div>
+                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="gpuTested"><label class="form-check-label" for="gpuTested">Tokens/s tested (not estimated)</label></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-action" id="gpuSaveBtn">Save</button></div>
+        </div></div></div>
+    </div>
+
+    <!-- ── Tab: Browse & Edit Results ──────────────────────────────── -->
+    <div class="tab-pane fade" id="tabResults">
+        <div class="card">
+            <div class="card-header">Browse &amp; Edit Results</div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small">GPU</label>
+                        <input class="form-control form-control-sm" placeholder="Filter by GPU…" id="resGpuFilter">
+                    </div>
+                    <div class="col-md-6 col-lg-2">
+                        <label class="form-label small">Search titles</label>
+                        <input class="form-control form-control-sm" placeholder="Search…" id="resSearch">
+                    </div>
+                    <div class="col-6 col-lg-1">
+                        <label class="form-label small">Min €</label>
+                        <input type="number" class="form-control form-control-sm" id="resMinPrice" value="0" min="0">
+                    </div>
+                    <div class="col-6 col-lg-1">
+                        <label class="form-label small">Max €</label>
+                        <input type="number" class="form-control form-control-sm" id="resMaxPrice" value="999999" min="0">
+                    </div>
+                    <div class="col-6 col-lg-1">
+                        <label class="form-label small">Sort by</label>
+                        <select class="form-select form-select-sm" id="resSortBy">
+                            <option value="timestamp" selected>Newest</option>
+                            <option value="price">Price</option>
+                            <option value="gpu">GPU</option>
+                            <option value="vram">VRAM</option>
+                            <option value="tokens">Tokens/s</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-1">
+                        <label class="form-label small">Order</label>
+                        <select class="form-select form-select-sm" id="resSortOrder">
+                            <option value="desc" selected>Desc</option>
+                            <option value="asc">Asc</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-1">
+                        <label class="form-label small">Limit</label>
+                        <select class="form-select form-select-sm" id="resLimit">
+                            <option value="50">50</option>
+                            <option value="200" selected>200</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-1 d-flex flex-column">
+                        <label class="form-label small">&nbsp;</label>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" id="resActiveOnly">
+                            <label class="form-check-label small" for="resActiveOnly">Active only</label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-1 d-flex align-items-end">
+                        <button class="btn btn-action btn-sm w-100" id="resLoadBtn">Load</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead><tr><th>GPU</th><th>Title</th><th>Price</th><th>VRAM</th><th>Active</th><th>Date</th><th>Link</th><th style="width:110px">Actions</th></tr></thead>
+                        <tbody id="resultsTable"><tr><td colspan="8" class="text-center text-muted">Click "Load" to fetch results</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit result modal -->
+        <div class="modal fade" id="resultModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Edit Result</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="resEditIndex">
+                <div class="mb-3"><label class="form-label">GPU Name</label><input class="form-control" id="resGpuName"></div>
+                <div class="mb-3"><label class="form-label">Title</label><input class="form-control" id="resTitle"></div>
+                <div class="row">
+                    <div class="col-6 mb-3"><label class="form-label">Price (€)</label><input type="number" class="form-control" id="resPrice"></div>
+                    <div class="col-6 mb-3"><label class="form-label">Active</label><select class="form-select" id="resActive"><option value="true">Yes</option><option value="false">No</option></select></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Link</label><input class="form-control" id="resLink"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-action" id="resSaveBtn">Save</button></div>
+        </div></div></div>
+    </div>
+
+    <!-- ── Tab: Distribution Chart ─────────────────────────────────── -->
+    <div class="tab-pane fade" id="tabOutliers">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Price Outliers</span>
+                <div class="d-flex gap-2">
+                    <input class="form-control form-control-sm" placeholder="Filter GPU…" id="outlierGpuFilter" style="width:180px">
+                    <button class="btn btn-sm btn-light" id="outlierLoadBtn">Load</button>
+                    <button class="btn btn-sm btn-warning" id="outlierSweepBtn">🔄 Sweep Now</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead><tr><th>GPU</th><th>Title</th><th>Price</th><th>Reason</th><th>Flagged</th><th>Link</th><th style="width:130px">Actions</th></tr></thead>
+                        <tbody id="outlierTable"><tr><td colspan="7" class="text-center text-muted">Click "Load" to fetch outliers</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>🛡️ Manually Restored Listings <small class="text-muted">(protected from auto-sweep)</small></span>
+                <button class="btn btn-sm btn-light" id="restoredLoadBtn">Load</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead><tr><th>GPU</th><th>Title</th><th>Price</th><th>Saved</th><th>Link</th><th style="width:140px">Actions</th></tr></thead>
+                        <tbody id="restoredTable"><tr><td colspan="6" class="text-center text-muted">Click "Load" to see restored listings</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab: Distribution Chart (original) ──────────────────────── -->
+    <div class="tab-pane fade" id="tabChart">
+        <div class="card"><div class="card-body"><div id="distributionChart" style="height:350px;"></div></div></div>
+    </div>
+
+</div><!-- /tab-content -->
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ── helpers ─────────────────────────────────────────────────────── */
+function toast(msg, type='success') {
+    const c = document.getElementById('toastContainer');
+    const id = 't'+Date.now();
+    c.insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="toast align-items-center text-bg-${type} border-0 show" role="alert">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`);
+    setTimeout(()=>document.getElementById(id)?.remove(), 4000);
+}
+
+/* ── Stats ───────────────────────────────────────────────────────── */
+async function loadStats() {
+    const s = await (await fetch("/api/stats")).json();
+    document.getElementById("totalResults").textContent = s.total_results.toLocaleString();
+    document.getElementById("activeResults").textContent = s.active_results.toLocaleString();
+    document.getElementById("trackedGpus").textContent = s.tracked_gpus;
+    document.getElementById("outlierCount").textContent = (s.outlier_count||0).toLocaleString();
+    document.getElementById("workerStatus").innerHTML = s.worker_running
+        ? '<span class="status-dot running"></span>Running'
+        : '<span class="status-dot stopped"></span>Stopped';
+    if (s.last_updated) document.getElementById("lastUpdated").textContent = "Last update: " + new Date(s.last_updated).toLocaleString();
+    if (s.search_interval_sec) {
+        const sel = document.getElementById("intervalSelect");
+        sel.value = String(s.search_interval_sec);
+    }
+}
+
+/* ── GPU Breakdown ───────────────────────────────────────────────── */
+async function loadBreakdown() {
+    const rows = await (await fetch("/api/gpu-breakdown")).json();
+    document.getElementById("breakdownTable").innerHTML = rows.map(r => `
+        <tr>
+            <td><strong>${r.gpu}</strong></td><td>${r.vram} GB</td><td>${r.tokens_sec}</td>
+            <td>${r.total_listings}</td>
+            <td><span class="badge ${r.active_listings>0?'badge-active':'badge-inactive'}">${r.active_listings}</span></td>
+            <td>${r.min_price!=null?'€'+r.min_price:'—'}</td>
+            <td>${r.max_price!=null?'€'+r.max_price:'—'}</td>
+            <td><button class="btn btn-outline-danger btn-xs" onclick="purgeGpuResults('${r.gpu_id}','${r.gpu}')">🗑️ Purge</button></td>
+        </tr>`).join("");
+
+    // chart
+    const sorted = [...rows].sort((a,b)=>b.total_listings-a.total_listings);
+    Plotly.newPlot("distributionChart",[{
+        x:sorted.map(r=>r.gpu), y:sorted.map(r=>r.total_listings), type:"bar",
+        marker:{color:sorted.map((_,i)=>i<sorted.length/2?"#667eea":"#a78bfa")}
+    }],{margin:{l:40,r:10,t:10,b:80},xaxis:{tickangle:-45},yaxis:{title:"Listings"},plot_bgcolor:"#fafbfc",paper_bgcolor:"white"},{responsive:true});
+}
+async function purgeGpuResults(gpuId, name) {
+    if (!confirm(`Delete ALL results for ${name}?`)) return;
+    const r = await (await fetch(`/api/results/gpu/${encodeURIComponent(gpuId)}`,{method:'DELETE'})).json();
+    toast(`Deleted ${r.count} results for ${name}`);
+    loadBreakdown(); loadStats();
+}
+
+/* ── GPU Manager ─────────────────────────────────────────────────── */
+let gpuModal;
+async function loadGpuTable() {
+    const gpus = await (await fetch("/api/gpus")).json();
+    document.getElementById("gpuTable").innerHTML = gpus.map(g => `
+        <tr>
+            <td><strong>${g.name}</strong></td><td>${g.vram}</td><td>${g.tokens_sec}</td>
+            <td>${g.tokens_tested?'✅':'—'}</td>
+            <td><small>${g.search_queries.join(', ')}</small></td>
+            <td>
+                <button class="btn btn-outline-primary btn-xs" onclick='openEditGpu(${JSON.stringify(g)})'>✏️</button>
+                <button class="btn btn-outline-danger btn-xs" onclick="deleteGpu('${g.id}','${g.name}')">🗑️</button>
+            </td>
+        </tr>`).join("");
+}
+document.getElementById("addGpuBtn").addEventListener("click", ()=>{
+    document.getElementById("gpuModalTitle").textContent="Add GPU";
+    document.getElementById("gpuOriginalName").value="";
+    document.getElementById("gpuName").value="";
+    document.getElementById("gpuVram").value="";
+    document.getElementById("gpuTokens").value="";
+    document.getElementById("gpuQueries").value="";
+    document.getElementById("gpuTested").checked=false;
+    gpuModal.show();
+});
+function openEditGpu(g) {
+    document.getElementById("gpuModalTitle").textContent="Edit GPU";
+    document.getElementById("gpuOriginalName").value=g.id;
+    document.getElementById("gpuName").value=g.name;
+    document.getElementById("gpuVram").value=g.vram;
+    document.getElementById("gpuTokens").value=g.tokens_sec;
+    document.getElementById("gpuQueries").value=g.search_queries.join(", ");
+    document.getElementById("gpuTested").checked=g.tokens_tested;
+    gpuModal.show();
+}
+document.getElementById("gpuSaveBtn").addEventListener("click", async ()=>{
+    const orig = document.getElementById("gpuOriginalName").value;
+    const body = {
+        name: document.getElementById("gpuName").value.trim(),
+        vram: parseInt(document.getElementById("gpuVram").value)||0,
+        tokens_sec: parseFloat(document.getElementById("gpuTokens").value)||0,
+        search_queries: document.getElementById("gpuQueries").value.split(",").map(s=>s.trim()).filter(Boolean),
+        tokens_tested: document.getElementById("gpuTested").checked,
+    };
+    try {
+        if (orig) {
+            await fetch(`/api/gpus/${encodeURIComponent(orig)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            toast('GPU updated');
+        } else {
+            const r = await fetch('/api/gpus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+            if(!r.ok){ const e=await r.json(); toast(e.error,'danger'); return; }
+            toast('GPU created');
+        }
+        gpuModal.hide(); loadGpuTable(); loadBreakdown(); loadStats();
+    } catch(e) { toast('Error: '+e,'danger'); }
+});
+async function deleteGpu(gpuId, name) {
+    if (!confirm(`Delete GPU "${name}"? This does NOT delete its results.`)) return;
+    await fetch(`/api/gpus/${encodeURIComponent(gpuId)}`,{method:'DELETE'});
+    toast('GPU deleted'); loadGpuTable(); loadBreakdown(); loadStats();
+}
+
+/* ── Results Browser ─────────────────────────────────────────────── */
+let resultModal;
+async function loadResults() {
+    const params = new URLSearchParams({
+        gpu: document.getElementById("resGpuFilter").value,
+        search: document.getElementById("resSearch").value,
+        min_price: document.getElementById("resMinPrice").value,
+        max_price: document.getElementById("resMaxPrice").value,
+        sort_by: document.getElementById("resSortBy").value,
+        order: document.getElementById("resSortOrder").value,
+        limit: document.getElementById("resLimit").value,
+        active_only: document.getElementById("resActiveOnly").checked ? "true" : "",
+    });
+    const rows = await (await fetch(`/api/results?${params}`)).json();
+    const tbody = document.getElementById("resultsTable");
+    if (!rows.length) { tbody.innerHTML='<tr><td colspan="8" class="text-center text-muted">No results</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.gpu_name}</td>
+            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
+            <td>€${r.price}</td>
+            <td>${r.vram != null ? r.vram + ' GB' : '—'}</td>
+            <td><span class="badge ${r.active?'badge-active':'badge-inactive'}">${r.active?'Yes':'No'}</span></td>
+            <td><small>${r.timestamp?new Date(r.timestamp).toLocaleDateString():''}</small></td>
+            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>
+                <button class="btn btn-outline-primary btn-xs" onclick='openEditResult(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️</button>
+                <button class="btn btn-outline-danger btn-xs" onclick="deleteResult(${r.id})">🗑️</button>
+            </td>
+        </tr>`).join("");
+}
+document.getElementById("resLoadBtn").addEventListener("click", loadResults);
+
+function openEditResult(r) {
+    document.getElementById("resEditIndex").value = r.id;
+    document.getElementById("resGpuName").value = r.gpu_name||'';
+    document.getElementById("resTitle").value = r.title||'';
+    document.getElementById("resPrice").value = r.price||'';
+    document.getElementById("resActive").value = r.active?'true':'false';
+    document.getElementById("resLink").value = r.link||'';
+    resultModal.show();
+}
+document.getElementById("resSaveBtn").addEventListener("click", async ()=>{
+    const idx = document.getElementById("resEditIndex").value;
+    const body = {
+        gpu_name: document.getElementById("resGpuName").value,
+        title: document.getElementById("resTitle").value,
+        price: parseFloat(document.getElementById("resPrice").value)||0,
+        active: document.getElementById("resActive").value === 'true',
+        link: document.getElementById("resLink").value,
+    };
+    await fetch(`/api/results/${idx}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    toast('Result updated'); resultModal.hide(); loadResults(); loadStats();
+});
+async function deleteResult(idx) {
+    if (!confirm('Delete this result?')) return;
+    await fetch(`/api/results/${idx}`,{method:'DELETE'});
+    toast('Result deleted'); loadResults(); loadStats();
+}
+
+/* ── Outliers Browser ─────────────────────────────────────────────── */
+async function loadOutliers() {
+    const params = new URLSearchParams({
+        gpu: document.getElementById("outlierGpuFilter").value,
+        limit: '200',
+    });
+    const rows = await (await fetch(`/api/outliers?${params}`)).json();
+    const tbody = document.getElementById("outlierTable");
+    if (!rows.length) { tbody.innerHTML='<tr><td colspan="7" class="text-center text-muted">No outliers</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.gpu_name}</td>
+            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
+            <td>€${r.price}</td>
+            <td><small class="text-muted">${r.reason||''}</small></td>
+            <td><small>${r.moved_at?new Date(r.moved_at).toLocaleDateString():''}</small></td>
+            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>
+                <button class="btn btn-outline-success btn-sm" onclick="restoreOutlier(${r.id}, this)">↩️ Restore</button>
+                <button class="btn btn-outline-danger btn-sm" onclick="removeOutlier(${r.id}, this)">🗑️</button>
+            </td>
+        </tr>`).join("");
+}
+document.getElementById("outlierLoadBtn").addEventListener("click", loadOutliers);
+document.getElementById("outlierSweepBtn").addEventListener("click", async ()=>{
+    const r = await (await fetch('/api/outliers/sweep',{method:'POST'})).json();
+    toast(`Sweep: ${r.moved} flagged, ${r.restored} restored`);
+    loadOutliers(); loadStats(); loadBreakdown();
+});
+async function restoreOutlier(pk, btn) {
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`/api/outliers/${pk}/restore`, {method: 'POST'});
+        const data = await res.json();
+        if (res.ok) {
+            toast('Outlier restored to listings');
+        } else {
+            toast(data.error || 'Restore failed', 'danger');
+        }
+    } catch (e) {
+        toast('Network error: ' + e.message, 'danger');
+    }
+    loadOutliers(); loadRestored(); loadStats();
+}
+async function removeOutlier(pk, btn) {
+    if (!confirm('Permanently delete this outlier?')) return;
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`/api/outliers/${pk}`, {method: 'DELETE'});
+        const data = await res.json();
+        if (res.ok) {
+            toast('Outlier deleted');
+        } else {
+            toast(data.error || 'Delete failed', 'danger');
+        }
+    } catch (e) {
+        toast('Network error: ' + e.message, 'danger');
+    }
+    loadOutliers(); loadStats();
+}
+
+/* ── Restored Listings Browser ────────────────────────────────────── */
+async function loadRestored() {
+    const rows = await (await fetch('/api/restored?limit=200')).json();
+    const tbody = document.getElementById("restoredTable");
+    if (!rows.length) { tbody.innerHTML='<tr><td colspan="6" class="text-center text-muted">No manually restored listings</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.gpu_name}</td>
+            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
+            <td>€${r.price}</td>
+            <td><small>${r.timestamp?new Date(r.timestamp).toLocaleDateString():''}</small></td>
+            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>
+                <button class="btn btn-outline-warning btn-sm" onclick="unrestoreListing(${r.id}, this)">↩️ Re-flag</button>
+            </td>
+        </tr>`).join("");
+}
+document.getElementById("restoredLoadBtn").addEventListener("click", loadRestored);
+async function unrestoreListing(pk, btn) {
+    if (!confirm('Move this listing back to outliers?')) return;
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`/api/restored/${pk}/unrestore`, {method: 'POST'});
+        const data = await res.json();
+        if (res.ok) {
+            toast('Listing moved back to outliers');
+        } else {
+            toast(data.error || 'Failed', 'danger');
+        }
+    } catch (e) {
+        toast('Network error: ' + e.message, 'danger');
+    }
+    loadRestored(); loadOutliers(); loadStats();
+}
+
+/* ── Worker trigger ──────────────────────────────────────────────── */
+document.getElementById("triggerSearchBtn").addEventListener("click", async ()=>{
+    const btn=document.getElementById("triggerSearchBtn"), st=document.getElementById("searchStatus");
+    btn.disabled=true; st.textContent="Search cycle started…";
+    try { await fetch("/api/trigger-search",{method:"POST"}); st.textContent="Running in background. Refresh to see new results."; }
+    catch(e){ st.textContent="Error triggering search."; }
+    setTimeout(()=>{btn.disabled=false;},5000);
+});
+document.getElementById("intervalSelect").addEventListener("change", async (e)=>{
+    const sec = parseInt(e.target.value);
+    try {
+        const r = await (await fetch("/api/search-interval",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({seconds:sec})})).json();
+        if (r.status==="updated") toast(`Search interval set to ${r.seconds}s`);
+        else toast(r.error||"Failed","danger");
+    } catch(e){ toast("Network error","danger"); }
+});
+document.getElementById("refreshBtn").addEventListener("click", ()=>{ loadStats(); loadBreakdown(); loadGpuTable(); });
+
+/* ── Init ────────────────────────────────────────────────────────── */
+gpuModal = new bootstrap.Modal(document.getElementById('gpuModal'));
+resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+loadStats(); loadBreakdown(); loadGpuTable();
+setInterval(loadStats, 15000);
+</script>
+</body>
+</html>

@@ -6,16 +6,22 @@ This document explains the organization of the gpuutje-kopen project following s
 
 ```
 project_root/
-├── app.py                              # Flask application entry point
+├── app.py                              # Flask app factory & entry point
 ├── src/gpuutje_kopen/                 # Main package
 │   ├── __init__.py                     # Package initialization
-│   ├── gpu_list.py                     # GPU specifications and list
+│   ├── gpu_loading.py                  # GPU dataclass & JSON loader
 │   ├── storage.py                      # Data persistence layer
 │   ├── analytics.py                    # Price analysis and statistics
 │   ├── validation.py                   # GPU listing validation
-│   └── search_worker.py                # Background search worker
+│   ├── search_worker.py                # Background search worker
+│   ├── services.py                     # Business logic (keeps routes thin)
+│   └── routes/                         # Flask blueprints
+│       ├── __init__.py
+│       ├── public.py                   # Public dashboard & data APIs
+│       └── admin.py                    # Admin control panel & stats APIs
 ├── templates/                          # Jinja2 HTML templates
-│   └── index.html                      # Main web interface
+│   ├── index.html                      # Public web interface
+│   └── admin.html                      # Admin / control panel interface
 ├── tests/                              # Test suite
 │   └── test_validation.py              # Validation module tests
 ├── docs/                               # Project documentation
@@ -23,14 +29,12 @@ project_root/
 │   ├── VALIDATION.md                   # Validation implementation details
 │   └── STRUCTURE.md                    # This file
 ├── data/                               # Data directory (created at runtime)
+│   ├── gpus.json                       # GPU specifications list
 │   └── results.json                    # Accumulated search results
-├── .venv/                              # Python virtual environment
 ├── docker-compose.yml                  # Docker Compose configuration
 ├── Dockerfile                          # Docker image definition
 ├── pyproject.toml                      # Python project configuration
-├── README.md                           # Project overview
-├── .gitignore                          # Git ignore rules
-└── .python-version                     # Python version specification
+└── README.md                           # Project overview
 ```
 
 ## Module Descriptions

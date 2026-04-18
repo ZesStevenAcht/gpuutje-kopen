@@ -16,8 +16,9 @@ RUN pip install --no-cache-dir -e .
 # Ensure data directory exists
 RUN mkdir -p /app/data
 
-# Expose Flask port
+# Expose Flask ports (public + admin)
 EXPOSE 5000
+EXPOSE 5001
 
-# Run the Flask app
-CMD ["python", "app.py"]
+# Run both apps via a small shell wrapper
+CMD ["sh", "-c", "python admin_app.py & python app.py"]
