@@ -1,11 +1,37 @@
+# ──────────────────────────────────────────────────────────────────────
+# GPUutje Kopen – Docker Compose
+# ──────────────────────────────────────────────────────────────────────
+#
+# Usage:
+#   docker compose up -d --build    Build the image from GitHub and start
+#   docker compose up -d            Start (uses cached image if already built)
+#   docker compose down             Stop and remove the container
+#   docker compose logs -f          Follow live logs
+#   docker compose up -d --build --no-cache   Force a clean rebuild (e.g. to pull latest code)
+#
+# Data persistence:
+#   The SQLite database and GPU data are stored in /app/data inside the
+#   container. Mount a host directory to keep data across rebuilds:
+#     volumes:
+#       - /your/host/path:/app/data
+#
+# Ports:
+#   5000 – Public dashboard
+#   5001 – Admin panel
+# ──────────────────────────────────────────────────────────────────────
+
 services:
   gpuutje-kopen:
-    image: zesstevenacht/gpuutje-kopen:latest
+    build:
+      context: https://github.com/ZesStevenAcht/gpuutje-kopen.git#master
+      dockerfile: Dockerfile
+    image: gpuutje-kopen:latest
     container_name: gpuutje-kopen-app
     ports:
-      - "5000:5000"
-      - "5001:5001"
+      - "5000:5000"   # Public dashboard
+      - "5001:5001"   # Admin panel
     volumes:
+      # Change the left side to any directory on your host machine
       - /mnt/Main/Apps/Gpuutje-kopen:/app/data
     environment:
       - FLASK_ENV=production
