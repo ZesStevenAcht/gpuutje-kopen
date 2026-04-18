@@ -12,6 +12,13 @@ RUN pip install --no-cache-dir -e .
 # Ensure data directory exists (will be overridden by volume mount)
 RUN mkdir -p /app/data
 
+# Build a pre-seeded database at build time into a safe location
+# that won't be overridden by a volume mount on /app/data
+RUN mkdir -p /app/data_builtin && \
+    python -c "import sys; sys.path.insert(0,'/app/src'); \
+import gpuutje_kopen.db as db; db.init_db()" && \
+    cp /app/data/gpuutje.db /app/data_builtin/gpuutje.db
+
 # Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh
 

@@ -11,6 +11,11 @@ set -e
 # Ensure the data directory exists (in case no volume is mounted)
 mkdir -p /app/data
 
+if [ ! -f /app/data/gpuutje.db ]; then
+    echo "[entrypoint] No database found — copying built-in DB to /app/data/"
+    cp /app/data_builtin/gpuutje.db /app/data/gpuutje.db
+fi
+
 echo "[entrypoint] Initialising database..."
 python -c "
 import sys
