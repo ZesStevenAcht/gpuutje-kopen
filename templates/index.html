@@ -5,66 +5,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPUutje kopen?</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
     <style>
+        /* ── Theme variables (edit here to restyle) ──────────── */
+        :root {
+            --bg-page:        #2d2d2d;
+            --bg-card:        #3a3a3a;
+            --bg-card-body:   #3a3a3a;
+            --bg-card-header: #8a9a5b;
+            --text-primary:   #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-heading:   #f0f0f0;
+            --text-header-bar:#1e1e1e;
+            --accent:         #8a9a5b;
+            --accent-hover:   #7a8a4b;
+            --border:         #4a4a4a;
+            --table-header:   #8a9a5b;
+            --table-hover:    #454545;
+            --link:           #a8c256;
+            --link-hover:     #c2d87a;
+            --shadow:         rgba(0,0,0,0.3);
+            --font-family:    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
         body {
-            background-color: #f8f9fa;
+            background-color: var(--bg-page);
             padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: var(--font-family);
+            color: var(--text-primary);
         }
         .header {
             margin-bottom: 30px;
             text-align: center;
         }
         .header h1 {
-            color: #2c3e50;
+            color: var(--text-heading);
             font-weight: 700;
             margin-bottom: 10px;
         }
         .header p {
-            color: #7f8c8d;
+            color: var(--text-secondary);
             font-size: 14px;
         }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .card-header {
+            background: var(--bg-card-header) !important;
+            color: var(--text-header-bar);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        .btn-primary, .btn-primary:focus {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-header-bar);
+        }
         .btn-primary:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px var(--shadow);
         }
         table {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             overflow: hidden;
+            color: var(--text-primary);
         }
         tbody tr:hover {
-            background-color: #f0f4ff;
+            background-color: var(--table-hover);
         }
         th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--table-header);
+            color: var(--text-header-bar);
             font-weight: 600;
             border: none;
         }
         td {
             padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border);
         }
         a.link-btn {
-            color: #667eea;
+            color: var(--link);
             text-decoration: none;
             font-weight: 600;
         }
         a.link-btn:hover {
-            color: #764ba2;
+            color: var(--link-hover);
             text-decoration: underline;
         }
         .stats {
-            background: white;
+            background: var(--bg-card);
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px var(--shadow);
             font-size: 14px;
-            color: #7f8c8d;
+            color: var(--text-secondary);
         }
         .main-grid {
             display: grid;
@@ -75,23 +116,39 @@
         }
         .description-card p {
             margin: 0 0 10px 0;
-            color: #333;
+            color: var(--text-primary);
             line-height: 1.45;
         }
+        .description-card a {
+            color: var(--link);
+        }
+        .description-card a:hover {
+            color: var(--link-hover);
+        }
         .main-grid .card { display:flex; flex-direction:column; }
-        .main-grid .card .graph-container { flex: 1 1 auto; }
-        .description-body { background: white; padding: 20px; border-radius: 0 0 12px 12px; display:flex; flex-direction:column; justify-content:center; }
+        .graph-wrapper { padding: 10px; aspect-ratio: 4/3; }
+        .graph-wrapper .graph-container { width: 100%; height: 100%; }
+        .description-body { background: var(--bg-card-body); padding: 20px; border-radius: 0 0 12px 12px; display:flex; flex-direction:column; justify-content:center; }
+        .form-control, .form-select {
+            background-color: var(--bg-card-body);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-card-body);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(138,154,91,0.25);
+        }
+        label {
+            color: var(--text-secondary);
+        }
         @media (min-width: 1000px) {
-            .main-grid {
-                grid-template-columns: 1fr 1fr;
-                align-items: start;
-            }
-            .main-grid .card { min-height: 420px; }
-            .graph-container { height: 100%; }
+            .graph-container { height: auto; }
         }
         @media (max-width: 768px) {
             .graph-container {
-                height: 350px;
+                aspect-ratio: 4/3;
             }
             body {
                 padding: 10px;
@@ -103,6 +160,7 @@
     </style>
 </head>
 <body>
+    <div style="max-width:800px; margin:0 auto;">
     <div class="header">
         <h1>GPUutje kopen?</h1>
         <p id="lastUpdate">Data loading...</p>
@@ -114,7 +172,7 @@
 
     <div class="main-grid">
         <!-- Tokens vs Price -->
-        <div class="card">
+        <div class="card plot-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Tokens/s vs Avg Price</span>
                 <select class="form-select form-select-sm" id="tokensDaysSelect" style="width: 200px;">
@@ -123,24 +181,11 @@
                     <option value="365">Last Year</option>
                 </select>
             </div>
-            <div id="tokensGraph" class="graph-container"></div>
-        </div>
-
-        <!-- VRAM vs Price -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>VRAM vs Avg Price</span>
-                <select class="form-select form-select-sm" id="vramDaysSelect" style="width: 200px;">
-                    <option value="14">Last 14 Days</option>
-                    <option value="30" selected>Last 30 Days</option>
-                    <option value="365">Last Year</option>
-                </select>
-            </div>
-            <div id="vramGraph" class="graph-container"></div>
+            <div class="graph-wrapper"><div id="tokensGraph" class="graph-container"></div></div>
         </div>
 
         <!-- Price Graph -->
-        <div class="card">
+        <div class="card plot-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Price Trend</span>
                 <div style="display:flex; gap:8px; align-items:center;">
@@ -154,7 +199,7 @@
                     </select>
                 </div>
             </div>
-            <div id="priceGraph" class="graph-container"></div>
+            <div class="graph-wrapper"><div id="priceGraph" class="graph-container"></div></div>
         </div>
 
         <!-- Description -->
@@ -168,12 +213,11 @@
                 <p><i>Gemaakt door Steven Jelsma</i></p>
             </div>
         </div>
-    </div>
 
-    <!-- Search Results -->
-    <div class="card">
-        <div class="card-header">Search Results</div>
-        <div style="background: white; padding: 20px; border-radius: 0 0 12px 12px;">
+        <!-- Search Results -->
+        <div class="card">
+            <div class="card-header">Search Results</div>
+            <div style="padding: 20px; border-radius: 0 0 12px 12px;">
             <div class="controls">
                 <div class="row">
                     <div class="col-md-6 col-lg-3 mb-3">
@@ -270,6 +314,10 @@
             select.innerHTML = currentGpuList.map(gpu => 
                 `<option value="${gpu.id}">${gpu.name}</option>`
             ).join("");
+
+            // Default to RTX 3070 if available
+            const rtx3070 = currentGpuList.find(g => g.name.includes("3070") && !g.name.includes("Ti"));
+            if (rtx3070) select.value = rtx3070.id;
             
             select.addEventListener("change", updatePriceGraph);
             updatePriceGraph();
@@ -286,7 +334,10 @@
             let gpuInfo = Object.entries(stats.gpu_counts)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 3)
-                .map(([name, count]) => `${name} (${count})`)
+                .map(([id, count]) => {
+                    const gpu = currentGpuList.find(g => g.id === id);
+                    return `${gpu ? gpu.name : id} (${count})`;
+                })
                 .join(" | ");
             
             document.getElementById("statsText").textContent = 
@@ -306,19 +357,20 @@
                 type: "scatter",
                 mode: "lines+markers",
                 fill: "tozeroy",
-                line: {color: "#667eea", width: 2},
-                marker: {size: 6, color: "#667eea"},
+                line: {color: "#8a9a5b", width: 2},
+                marker: {size: 6, color: "#8a9a5b"},
                 hovertemplate: "<b>%{x|%d/%m/%Y}</b><br>€%{y:.2f}<extra></extra>",
             };
             
             const layout = {
                 title: `Price History: ${gpuName}`,
-                xaxis: {title: "Date", type: 'date', tickformat: "%d/%m/%Y"},
-                yaxis: {title: "Price (€)"},
+                xaxis: {title: "Date", type: 'date', tickformat: "%d/%m/%Y", gridcolor: "#555"},
+                yaxis: {title: "Price (€)", gridcolor: "#555"},
+                font: {color: "#e0e0e0"},
                 hovermode: "x unified",
                 margin: {l: 50, r: 20, t: 40, b: 40},
-                plot_bgcolor: "#fafbfc",
-                paper_bgcolor: "white",
+                plot_bgcolor: "rgba(0,0,0,0)",
+                paper_bgcolor: "rgba(0,0,0,0)",
             };
             
             Plotly.newPlot("priceGraph", [trace], layout, {responsive: true});
@@ -331,9 +383,15 @@
 
             const points = data.points;
 
-            // Separate tested and estimated points
-            const tested = points.filter(p => p.tokens_tested === true);
-            const estimated = points.filter(p => p.tokens_tested === false);
+            // Discrete VRAM color palette
+            const vramColorMap = {
+                4: "#e6194b", 6: "#f58231", 8: "#ffe119", 10: "#bfef45",
+                12: "#3cb44b", 16: "#42d4f4", 20: "#4363d8", 24: "#911eb4",
+                32: "#f032e6", 48: "#a9a9a9", 80: "#ffffff",
+            };
+            function vramColor(vram) {
+                return vramColorMap[vram] || "#888";
+            }
 
             // Helper function to create hover text
             function createHoverText(p, metric) {
@@ -343,68 +401,70 @@
                 return `<b>${p.gpu}</b><br>${otherValue}<br>${metricValue}`;
             }
 
+            // Group points by VRAM so each group gets its own trace (discrete legend)
+            const vramValues = [...new Set(points.map(p => p.vram))].sort((a, b) => a - b);
             const traces = [];
+            const half = Math.ceil(vramValues.length / 2);
 
-            // Tested GPUs trace
-            if (tested.length > 0) {
-                const testedTrace = {
-                    x: tested.map(p => p.quality),
-                    y: tested.map(p => p.price),
-                    customdata: tested.map(p => p.lowest ? p.lowest.link : null),
+            for (let i = 0; i < vramValues.length; i++) {
+                const vram = vramValues[i];
+                const group = points.filter(p => p.vram === vram);
+                traces.push({
+                    x: group.map(p => p.quality),
+                    y: group.map(p => p.price),
+                    customdata: group.map(p => p.lowest ? p.lowest.link : null),
+                    text: group.map(p => createHoverText(p, metric)),
                     mode: "markers",
                     type: "scatter",
-                    text: tested.map(p => createHoverText(p, metric)),
                     marker: {
-                        size: 8,
-                        color: "#667eea",
-                        opacity: 0.8,
+                        size: 7,
+                        symbol: group.map(p => p.tokens_tested ? "circle" : "square"),
+                        color: vramColor(vram),
+                        opacity: 0.85,
+                        line: {width: 0.5, color: "#333"},
                     },
                     hovertemplate: "%{text}<extra></extra>",
-                    name: "Tested",
-                };
-                traces.push(testedTrace);
-            }
-
-            // Estimated GPUs trace (different color)
-            if (estimated.length > 0) {
-                const estimatedTrace = {
-                    x: estimated.map(p => p.quality),
-                    y: estimated.map(p => p.price),
-                    customdata: estimated.map(p => p.lowest ? p.lowest.link : null),
-                    mode: "markers",
-                    type: "scatter",
-                    text: estimated.map(p => createHoverText(p, metric)),
-                    marker: {
-                        size: 8,
-                        color: "#a78bfa",
-                        opacity: 0.6,
-                    },
-                    hovertemplate: "%{text}<extra></extra>",
-                    name: "Estimated",
-                };
-                traces.push(estimatedTrace);
+                    name: `${vram} GB`,
+                    legend: i < half ? "legend" : "legend2",
+                    visible: (metric === "tokens" && vram > 32) ? "legendonly" : true,
+                });
             }
 
             const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
             const layout = {
-                xaxis: {title: xLabel, gridcolor: "#e0e0e0"},
+                xaxis: {title: xLabel, gridcolor: "#555"},
                 yaxis: {
                     title: "Avg Price (€)",
-                    gridcolor: "#e0e0e0",
-                    range: [0, 1500] // Set default y-axis bounds
+                    gridcolor: "#555",
                 },
+                font: {color: "#e0e0e0"},
                 hovermode: "closest",
                 margin: {l: 50, r: 20, t: 40, b: 40},
-                plot_bgcolor: "#fafbfc",
-                paper_bgcolor: "white",
+                plot_bgcolor: "rgba(0,0,0,0)",
+                paper_bgcolor: "rgba(0,0,0,0)",
                 showlegend: true,
                 legend: {
-                    orientation: "v", // Vertical legend
-                    yanchor: "bottom",
-                    y: 0.80, // Position inside
+                    orientation: "v",
+                    yanchor: "top",
+                    y: 0.99,
                     xanchor: "left",
-                    x: 0.01 // Align to the left
-                }
+                    x: 0.01,
+                    font: {size: 10},
+                    tracegroupgap: 5,
+                    itemwidth: 30,
+                    bgcolor: "rgba(0,0,0,0)",
+                },
+                legend2: {
+                    orientation: "v",
+                    yanchor: "top",
+                    y: 0.99,
+                    xanchor: "left",
+                    x: 0.13,
+                    font: {size: 10},
+                    tracegroupgap: 5,
+                    itemwidth: 30,
+                    bgcolor: "rgba(0,0,0,0)",
+                },
             };
 
 
@@ -473,10 +533,6 @@
         document.getElementById("priceGroupSelect").addEventListener("change", updatePriceGraph);
         document.getElementById("showActiveOnly").addEventListener("change", loadResults);
         
-        document.getElementById("vramDaysSelect").addEventListener("change", () => 
-            updateScatterGraph("vramGraph", "vram", "vramDaysSelect")
-        );
-        
         document.getElementById("tokensDaysSelect").addEventListener("change", () => 
             updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect")
         );
@@ -489,7 +545,6 @@
             await updateStats();
             await loadGpus();
             await updateScatterGraph("tokensGraph", "tokens", "tokensDaysSelect");
-            await updateScatterGraph("vramGraph", "vram", "vramDaysSelect");
             await loadResults();
             
             // Refresh stats every 10 seconds
@@ -500,5 +555,6 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
 </body>
 </html>
