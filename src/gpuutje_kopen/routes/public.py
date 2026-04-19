@@ -1,21 +1,32 @@
 """Public-facing routes (main dashboard + data APIs)."""
 
+import time
+from collections import defaultdict
 from flask import Blueprint, render_template, request, jsonify
 from ..services import GPU_LIST, price_history, scatter_points, filtered_results, data_stats
 from ..db import record_page_view
 
 public = Blueprint("public", __name__)
 
+# Simple in-memory rate limiter: max 1 page_view write per IP per second
+_pv_last_write: dict[str, float] = defaultdict(float)
+_PV_MIN_INTERVAL = 1.0  # seconds
+
 
 @public.before_request
 def track_page_view():
-    """Record every non-static page hit."""
+    """Record every non-static page hit (rate-limited)."""
     if request.path.startswith("/static"):
         return
     try:
+        ip = request.remote_addr or ""
+        now = time.monotonic()
+        if now - _pv_last_write[ip] < _PV_MIN_INTERVAL:
+            return
+        _pv_last_write[ip] = now
         record_page_view(
             path=request.path,
-            ip=request.remote_addr,
+            ip=ip,
             user_agent=(request.user_agent.string or "")[:256],
         )
     except Exception:
@@ -49,7 +60,10 @@ def api_price_history(gpu_id):
 def api_scatter_data():
     days_str = request.args.get("days")
     metric = request.args.get("metric", "vram")
-    days = None if days_str == "all" else int(days_str) if days_str else 30
+    if days_str == "all":
+        days = None
+    else:
+        days = request.args.get("days", 30, type=int)
     return jsonify({"points": scatter_points(metric=metric, days=days)})
 
 

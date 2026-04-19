@@ -1,6 +1,7 @@
 """Flask web app for GPU price tracker."""
 
 import atexit
+import os
 import signal
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from gpuutje_kopen.routes.public import public
 from gpuutje_kopen.search_worker import start_worker_thread, stop_worker_thread
@@ -19,6 +21,10 @@ from gpuutje_kopen.search_worker import start_worker_thread, stop_worker_thread
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config["JSON_SORT_KEYS"] = False
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32).hex())
+
+    # Trust X-Forwarded-For from 2 proxies (Cloudflare → nginx)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=1, x_host=1)
 
     # Register blueprints
     app.register_blueprint(public)

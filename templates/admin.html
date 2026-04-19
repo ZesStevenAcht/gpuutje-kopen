@@ -297,6 +297,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 /* ── helpers ─────────────────────────────────────────────────────── */
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function toast(msg, type='success') {
     const c = document.getElementById('toastContainer');
     const id = 't'+Date.now();
@@ -329,12 +333,12 @@ async function loadBreakdown() {
     const rows = await (await fetch("/api/gpu-breakdown")).json();
     document.getElementById("breakdownTable").innerHTML = rows.map(r => `
         <tr>
-            <td><strong>${r.gpu}</strong></td><td>${r.vram} GB</td><td>${r.tokens_sec}</td>
+            <td><strong>${esc(r.gpu)}</strong></td><td>${esc(r.vram)} GB</td><td>${esc(r.tokens_sec)}</td>
             <td>${r.total_listings}</td>
             <td><span class="badge ${r.active_listings>0?'badge-active':'badge-inactive'}">${r.active_listings}</span></td>
             <td>${r.min_price!=null?'€'+r.min_price:'—'}</td>
             <td>${r.max_price!=null?'€'+r.max_price:'—'}</td>
-            <td><button class="btn btn-outline-danger btn-xs" onclick="purgeGpuResults('${r.gpu_id}','${r.gpu}')">🗑️ Purge</button></td>
+            <td><button class="btn btn-outline-danger btn-xs" onclick="purgeGpuResults('${esc(r.gpu_id)}','${esc(r.gpu)}')">🗑️ Purge</button></td>
         </tr>`).join("");
 
     // chart
@@ -357,12 +361,12 @@ async function loadGpuTable() {
     const gpus = await (await fetch("/api/gpus")).json();
     document.getElementById("gpuTable").innerHTML = gpus.map(g => `
         <tr>
-            <td><strong>${g.name}</strong></td><td>${g.vram}</td><td>${g.tokens_sec}</td>
+            <td><strong>${esc(g.name)}</strong></td><td>${esc(g.vram)}</td><td>${esc(g.tokens_sec)}</td>
             <td>${g.tokens_tested?'✅':'—'}</td>
-            <td><small>${g.search_queries.join(', ')}</small></td>
+            <td><small>${esc(g.search_queries.join(', '))}</small></td>
             <td>
                 <button class="btn btn-outline-primary btn-xs" onclick='openEditGpu(${JSON.stringify(g)})'>✏️</button>
-                <button class="btn btn-outline-danger btn-xs" onclick="deleteGpu('${g.id}','${g.name}')">🗑️</button>
+                <button class="btn btn-outline-danger btn-xs" onclick="deleteGpu('${esc(g.id)}','${esc(g.name)}')">🗑️</button>
             </td>
         </tr>`).join("");
 }
@@ -431,13 +435,13 @@ async function loadResults() {
     if (!rows.length) { tbody.innerHTML='<tr><td colspan="8" class="text-center text-muted">No results</td></tr>'; return; }
     tbody.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.gpu_name}</td>
-            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
-            <td>€${r.price}</td>
-            <td>${r.vram != null ? r.vram + ' GB' : '—'}</td>
+            <td>${esc(r.gpu_name)}</td>
+            <td title="${esc(r.title)}">${esc((r.title||'').substring(0,50))}</td>
+            <td>€${esc(r.price)}</td>
+            <td>${r.vram != null ? esc(r.vram) + ' GB' : '—'}</td>
             <td><span class="badge ${r.active?'badge-active':'badge-inactive'}">${r.active?'Yes':'No'}</span></td>
             <td><small>${r.timestamp?new Date(r.timestamp).toLocaleDateString():''}</small></td>
-            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>${r.link?`<a href="${esc(r.link)}" target="_blank" class="small">Open</a>`:''}</td>
             <td>
                 <button class="btn btn-outline-primary btn-xs" onclick='openEditResult(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️</button>
                 <button class="btn btn-outline-danger btn-xs" onclick="deleteResult(${r.id})">🗑️</button>
@@ -484,12 +488,12 @@ async function loadOutliers() {
     if (!rows.length) { tbody.innerHTML='<tr><td colspan="7" class="text-center text-muted">No outliers</td></tr>'; return; }
     tbody.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.gpu_name}</td>
-            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
-            <td>€${r.price}</td>
-            <td><small class="text-muted">${r.reason||''}</small></td>
+            <td>${esc(r.gpu_name)}</td>
+            <td title="${esc(r.title)}">${esc((r.title||'').substring(0,50))}</td>
+            <td>€${esc(r.price)}</td>
+            <td><small class="text-muted">${esc(r.reason)}</small></td>
             <td><small>${r.moved_at?new Date(r.moved_at).toLocaleDateString():''}</small></td>
-            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>${r.link?`<a href="${esc(r.link)}" target="_blank" class="small">Open</a>`:''}</td>
             <td>
                 <button class="btn btn-outline-success btn-sm" onclick="restoreOutlier(${r.id}, this)">↩️ Restore</button>
                 <button class="btn btn-outline-danger btn-sm" onclick="removeOutlier(${r.id}, this)">🗑️</button>
@@ -541,11 +545,11 @@ async function loadRestored() {
     if (!rows.length) { tbody.innerHTML='<tr><td colspan="6" class="text-center text-muted">No manually restored listings</td></tr>'; return; }
     tbody.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.gpu_name}</td>
-            <td title="${(r.title||'').replace(/"/g,'&quot;')}">${(r.title||'').substring(0,50)}</td>
-            <td>€${r.price}</td>
+            <td>${esc(r.gpu_name)}</td>
+            <td title="${esc(r.title)}">${esc((r.title||'').substring(0,50))}</td>
+            <td>€${esc(r.price)}</td>
             <td><small>${r.timestamp?new Date(r.timestamp).toLocaleDateString():''}</small></td>
-            <td>${r.link?`<a href="${r.link}" target="_blank" class="small">Open</a>`:''}</td>
+            <td>${r.link?`<a href="${esc(r.link)}" target="_blank" class="small">Open</a>`:''}</td>
             <td>
                 <button class="btn btn-outline-warning btn-sm" onclick="unrestoreListing(${r.id}, this)">↩️ Re-flag</button>
             </td>

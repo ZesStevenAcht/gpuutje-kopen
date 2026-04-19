@@ -1,5 +1,6 @@
 """SQLite database layer – single source of truth for GPUs and listings."""
 
+import hashlib
 import json
 import logging
 import sqlite3
@@ -857,12 +858,19 @@ def revalidate_outliers() -> dict:
 
 # ── Page-view tracking ────────────────────────────────────────────────
 
+def _hash_ip(ip: str | None) -> str | None:
+    """SHA-256 hash an IP for privacy."""
+    if not ip:
+        return None
+    return hashlib.sha256(ip.encode()).hexdigest()[:16]
+
+
 def record_page_view(path: str, ip: str | None, user_agent: str | None):
-    """Insert a page-view row."""
+    """Insert a page-view row with hashed IP."""
     c = _conn()
     c.execute(
         "INSERT INTO page_views (path, ip, user_agent, timestamp) VALUES (?,?,?,?)",
-        (path, ip, user_agent, datetime.utcnow().isoformat()),
+        (path, _hash_ip(ip), user_agent, datetime.utcnow().isoformat()),
     )
     c.commit()
 
