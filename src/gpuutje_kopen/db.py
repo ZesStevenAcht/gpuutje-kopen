@@ -78,6 +78,17 @@ def init_db():
 
     c.execute("CREATE INDEX IF NOT EXISTS idx_outliers_gpu ON outliers(gpu_id)")
 
+    c.execute("""CREATE TABLE IF NOT EXISTS page_views (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        path       TEXT NOT NULL,
+        ip         TEXT,
+        user_agent TEXT,
+        timestamp  TEXT NOT NULL
+    )""")
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_pv_ts   ON page_views(timestamp)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_pv_ip   ON page_views(ip)")
+
     c.execute("""CREATE TABLE IF NOT EXISTS settings (
         key   TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -842,3 +853,69 @@ def revalidate_outliers() -> dict:
 
     c.commit()
     return stats
+
+
+# ── Page-view tracking ────────────────────────────────────────────────
+
+def record_page_view(path: str, ip: str | None, user_agent: str | None):
+    """Insert a page-view row."""
+    c = _conn()
+    c.execute(
+        "INSERT INTO page_views (path, ip, user_agent, timestamp) VALUES (?,?,?,?)",
+        (path, ip, user_agent, datetime.utcnow().isoformat()),
+    )
+    c.commit()
+
+
+def traffic_stats(days: int = 30) -> dict:
+    """Return aggregate traffic numbers and daily series."""
+    c = _conn()
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # All hits
+    total = c.execute("SELECT COUNT(*) FROM page_views WHERE timestamp>=?", (cutoff,)).fetchone()[0]
+    unique = c.execute("SELECT COUNT(DISTINCT ip) FROM page_views WHERE timestamp>=?", (cutoff,)).fetchone()[0]
+
+    # Page views only (path = '/')
+    page_total = c.execute("SELECT COUNT(*) FROM page_views WHERE timestamp>=? AND path='/'", (cutoff,)).fetchone()[0]
+    page_unique = c.execute("SELECT COUNT(DISTINCT ip) FROM page_views WHERE timestamp>=? AND path='/'", (cutoff,)).fetchone()[0]
+
+    # API calls only (path starts with /api)
+    api_total = c.execute("SELECT COUNT(*) FROM page_views WHERE timestamp>=? AND path LIKE '/api%'", (cutoff,)).fetchone()[0]
+
+    # Today
+    today_page = c.execute("SELECT COUNT(*) FROM page_views WHERE timestamp>=? AND path='/'", (today_start,)).fetchone()[0]
+    today_page_unique = c.execute("SELECT COUNT(DISTINCT ip) FROM page_views WHERE timestamp>=? AND path='/'", (today_start,)).fetchone()[0]
+    today_api = c.execute("SELECT COUNT(*) FROM page_views WHERE timestamp>=? AND path LIKE '/api%'", (today_start,)).fetchone()[0]
+
+    # Daily breakdown – page views only (for the graph)
+    rows = c.execute("""
+        SELECT DATE(timestamp) AS day,
+               COUNT(*)        AS views,
+               COUNT(DISTINCT ip) AS unique_visitors
+        FROM page_views
+        WHERE timestamp >= ? AND path = '/'
+        GROUP BY day ORDER BY day
+    """, (cutoff,)).fetchall()
+    daily = [{"date": r[0], "views": r[1], "unique": r[2]} for r in rows]
+
+    # Top pages (all paths)
+    top_pages = c.execute("""
+        SELECT path, COUNT(*) AS cnt
+        FROM page_views WHERE timestamp >= ?
+        GROUP BY path ORDER BY cnt DESC LIMIT 10
+    """, (cutoff,)).fetchall()
+
+    return {
+        "page_views": page_total,
+        "page_unique": page_unique,
+        "api_calls": api_total,
+        "total_hits": total,
+        "unique_visitors": unique,
+        "today_page_views": today_page,
+        "today_page_unique": today_page_unique,
+        "today_api_calls": today_api,
+        "daily": daily,
+        "top_pages": [{"path": r[0], "count": r[1]} for r in top_pages],
+    }

@@ -25,6 +25,7 @@ from ..db import (
     revalidate_listings,
     browse_restored_listings,
     unrestore_listing,
+    traffic_stats,
 )
 from ..services import data_stats, refresh_gpu_cache
 from ..search_worker import run_search_cycle, SEARCH_INTERVAL, _stop_event, get_search_interval, set_search_interval
@@ -230,3 +231,11 @@ def api_unrestore(pk: int):
     if unrestore_listing(pk):
         return jsonify({"status": "unflagged"})
     return jsonify({"error": "Not found"}), 404
+
+
+# ── Traffic analytics ─────────────────────────────────────────────────
+
+@admin.route("/api/traffic")
+def api_traffic():
+    days = request.args.get("days", 30, type=int)
+    return jsonify(traffic_stats(days=days))

@@ -2,8 +2,24 @@
 
 from flask import Blueprint, render_template, request, jsonify
 from ..services import GPU_LIST, price_history, scatter_points, filtered_results, data_stats
+from ..db import record_page_view
 
 public = Blueprint("public", __name__)
+
+
+@public.before_request
+def track_page_view():
+    """Record every non-static page hit."""
+    if request.path.startswith("/static"):
+        return
+    try:
+        record_page_view(
+            path=request.path,
+            ip=request.remote_addr,
+            user_agent=(request.user_agent.string or "")[:256],
+        )
+    except Exception:
+        pass  # never break the request over analytics
 
 
 @public.route("/")
