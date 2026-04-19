@@ -2,6 +2,21 @@
 let currentGpuList = [];
 
 /* ── Helpers ──────────────────────────────────────────── */
+/** Prevent any axis from going below zero after pan/zoom */
+function clampAxes(graphId) {
+    const gd = document.getElementById(graphId);
+    gd.on("plotly_relayout", function (ev) {
+        const update = {};
+        for (const key of Object.keys(ev)) {
+            // match xaxis.range[0], yaxis.range[0], xaxis2.range[0], etc.
+            if (key.match(/^[xy]axis\d*\.range\[0\]$/) && ev[key] < 0) {
+                update[key] = 0;
+            }
+        }
+        if (Object.keys(update).length) Plotly.relayout(gd, update);
+    });
+}
+
 function fmtDate(d) {
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -77,7 +92,8 @@ async function updatePriceGraph() {
     const layout = {
         title: `Price History: ${gpuName}`,
         xaxis: { title: "Date", type: "date", tickformat: "%d/%m/%Y", gridcolor: "#555" },
-        yaxis: { title: "Price (€)", gridcolor: "#555" },
+        yaxis: { title: "Price (€)", rangemode: "tozero", gridcolor: "#555" },
+        dragmode: "pan",
         font: { color: "#e0e0e0" },
         hovermode: "x unified",
         margin: { l: 50, r: 20, t: 40, b: 40 },
@@ -85,7 +101,12 @@ async function updatePriceGraph() {
         paper_bgcolor: "rgba(0,0,0,0)",
     };
 
-    Plotly.newPlot("priceGraph", [trace], layout, { responsive: true });
+    Plotly.newPlot("priceGraph", [trace], layout, {
+        responsive: true,
+        scrollZoom: false,
+        displayModeBar: false,
+        staticPlot: true,
+    });
 }
 
 /* ── Scatter chart (Tokens/s or VRAM vs price) ────────── */
@@ -142,8 +163,9 @@ async function updateScatterGraph(graphId, metric, daysSelect) {
 
     const xLabel = metric === "vram" ? "VRAM (GB)" : "Tokens/s";
     const layout = {
-        xaxis: { title: xLabel, gridcolor: "#555" },
-        yaxis: { title: "Avg Price (€)", gridcolor: "#555" },
+        xaxis: { title: xLabel, rangemode: "tozero", gridcolor: "#555" },
+        yaxis: { title: "Avg Price (€)", rangemode: "tozero", gridcolor: "#555" },
+        dragmode: "pan",
         font: { color: "#e0e0e0" },
         hovermode: "closest",
         margin: { l: 50, r: 20, t: 40, b: 40 },
@@ -166,7 +188,8 @@ async function updateScatterGraph(graphId, metric, daysSelect) {
         },
     };
 
-    await Plotly.newPlot(graphId, traces, layout, { responsive: true });
+    await Plotly.newPlot(graphId, traces, layout, { responsive: true, scrollZoom: true });
+    clampAxes(graphId);
 
     // Open lowest listing when user clicks a point
     document.getElementById(graphId).on("plotly_click", function (ev) {
