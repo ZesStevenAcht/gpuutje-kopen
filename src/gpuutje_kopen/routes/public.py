@@ -11,6 +11,11 @@ def index():
     return render_template("index.html")
 
 
+@public.route("/test")
+def test_page():
+    return render_template("test.html")
+
+
 @public.route("/api/gpus")
 def api_gpus():
     return jsonify([{"id": g.id, "name": g.name, "vram": g.vram, "tokens_sec": g.tokens_sec} for g in GPU_LIST])

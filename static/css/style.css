@@ -1,0 +1,206 @@
+/* ── Theme variables (edit here to restyle) ──────────── */
+:root {
+    --bg-page:        #2d2d2d;
+    --bg-card:        #3a3a3a;
+    --bg-card-body:   #3a3a3a;
+    --bg-card-header: #8a9a5b;
+    --text-primary:   #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-heading:   #f0f0f0;
+    --text-header-bar:#1e1e1e;
+    --accent:         #8a9a5b;
+    --accent-hover:   #7a8a4b;
+    --border:         #4a4a4a;
+    --table-header:   #8a9a5b;
+    --table-hover:    #454545;
+    --link:           #a8c256;
+    --link-hover:     #c2d87a;
+    --shadow:         rgba(0,0,0,0.3);
+    --font-family:    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-page);
+    padding: 20px;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+}
+
+/* ── Layout ──────────────────────────────────────────── */
+.page-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+.header h1 {
+    color: var(--text-heading);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* ── Cards ───────────────────────────────────────────── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+.card-header {
+    background: var(--bg-card-header) !important;
+    color: var(--text-header-bar);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.btn-primary, .btn-primary:focus {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-header-bar);
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* ── Table ───────────────────────────────────────────── */
+table {
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    color: var(--text-primary);
+}
+tbody tr:hover {
+    background-color: var(--table-hover);
+}
+th {
+    background: var(--table-header);
+    color: var(--text-header-bar);
+    font-weight: 600;
+    border: none;
+}
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border);
+}
+a.link-btn {
+    color: var(--link);
+    text-decoration: none;
+    font-weight: 600;
+}
+a.link-btn:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+/* ── Stats bar ───────────────────────────────────────── */
+.stats {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px var(--shadow);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ── Main grid ───────────────────────────────────────── */
+.main-grid {
+    display: grid;
+    gap: 20px;
+}
+.main-grid .card {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Graph containers ────────────────────────────────── */
+.graph-wrapper {
+    padding: 10px;
+    aspect-ratio: 4/3;
+}
+.graph-wrapper .graph-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Description card ────────────────────────────────── */
+.description-card .card-header {
+    font-size: 18px;
+}
+.description-card p {
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+    line-height: 1.45;
+}
+.description-card a {
+    color: var(--link);
+}
+.description-card a:hover {
+    color: var(--link-hover);
+}
+.description-body {
+    background: var(--bg-card-body);
+    padding: 20px;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* ── Forms ────────────────────────────────────────────── */
+.form-control, .form-select {
+    background-color: var(--bg-card-body);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-card-body);
+    border-color: var(--accent);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(138,154,91,0.25);
+}
+label {
+    color: var(--text-secondary);
+}
+
+/* ── Falling money ───────────────────────────────────── */
+#money-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+#money-canvas img {
+    position: absolute;
+    will-change: transform;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    .graph-wrapper {
+        aspect-ratio: 4/3;
+    }
+    body {
+        padding: 10px;
+    }
+    .header h1 {
+        font-size: 24px;
+    }
+}
